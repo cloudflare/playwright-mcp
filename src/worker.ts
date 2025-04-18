@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { McpAgent } from 'agents/mcp';
-import { createServer } from '.';
 
-export class PlaywrightMCP extends McpAgent<Env, {}, {}> {
-  // we can use a Server instead of a McpServer here
-  // @ts-expect-error
-  server = createServer(this.env.BROWSER, { vision: false });
+import { env } from 'cloudflare:workers';
 
-  async init() {
-    // do nothing
-  }
-}
+import { createMcpAgent } from '.';
+
+export const PlaywrightMCP = createMcpAgent(env.BROWSER);
 
 export default PlaywrightMCP.mount('/sse');

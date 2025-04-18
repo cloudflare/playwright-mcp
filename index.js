@@ -15,5 +15,5 @@
  * limitations under the License.
  */
 
-const { createServer } = require('./lib/index');
-module.exports = { createServer };
+const { createServer, createMcpAgent } = require('./lib/index');
+module.exports = { createServer, createMcpAgent };

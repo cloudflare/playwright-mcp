@@ -25,6 +25,8 @@ import type { Resource } from './resources/resource';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { LaunchOptions } from '@cloudflare/playwright';
 import { BrowserWorker } from '@cloudflare/playwright';
+import { McpAgent } from 'agents/mcp';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 const commonTools: Tool[] = [
   common.pressKey,
@@ -82,4 +84,16 @@ export function createServer(endpoint: BrowserWorker, options?: Options): Server
     userDataDir: options?.userDataDir ?? '',
     launchOptions: options?.launchOptions,
   });
+}
+
+export function createMcpAgent(endpoint: BrowserWorker, options?: Options): typeof McpAgent<Env, {}, {}> {
+  return class PlaywrightMcpAgent extends McpAgent<Env, {}, {}> {
+    // we can use a Server instead of a McpServer here
+    // but we need to force it
+    server = createServer(this.env.BROWSER, options) as unknown as McpServer;
+
+    async init() {
+      // do nothing
+    }
+  };
 }

@@ -15,8 +15,14 @@
  * limitations under the License.
  */
 
-import type { LaunchOptions } from '@cloudflare/playwright';
+import type { BrowserWorker, LaunchOptions } from '@cloudflare/playwright';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { McpAgent } from 'agents/mcp';
+
+declare namespace Cloudflare {
+	interface Env {
+  }
+}
 
 type Options = {
   /**
@@ -37,4 +43,6 @@ type Options = {
   vision?: boolean;
 };
 
-export function createServer(options?: Options): Server;
+export function createServer(endpoint: BrowserWorker, options?: Options): Server;
+
+export function createMcpAgent(endpoint: BrowserWorker, options?: Options): typeof McpAgent<Cloudflare.Env, {}, {}>;

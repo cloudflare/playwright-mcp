@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types';
+import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.d.ts';
 import type { JsonSchema7Type } from 'zod-to-json-schema';
 import type { Context } from '../context';
 

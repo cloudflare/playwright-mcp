@@ -1,15 +1,20 @@
 {
   "compilerOptions": {
     "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "module": "es2022",
     "moduleResolution": "Bundler",
     "strict": true,
-    "outDir": "./lib"
+    "outDir": "./lib",
   },
   "include": [
     "worker-configuration.d.ts",
     "src",
   ],
+  "exclude": [
+    "src/index.ts",
+    "src/program.ts",
+  ]
 }
