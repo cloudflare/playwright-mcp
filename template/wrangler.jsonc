@@ -1,0 +1,35 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cloudflare-playwright-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-10",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "browser": {
+    "binding": "BROWSER"
+  },
+  "migrations": [
+    {
+      "new_sqlite_classes": [
+        "PlaywrightMCP"
+      ],
+      "tag": "v1"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "PlaywrightMCP",
+        "name": "MCP_OBJECT"
+      }
+    ]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

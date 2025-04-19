@@ -196,4 +196,10 @@ export default [
     languageOptions,
     rules: baseRules,
   },
+  {
+    files: ['template/**/*'],
+    rules: {
+      'notice/notice': 'off',
+    },
+  },
 ];
