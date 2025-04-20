@@ -4,6 +4,10 @@
 
 This project leverages Playwright for automated browser testing and integrates with Cloudflare Workers, [Browser Rendering](https://developers.cloudflare.com/browser-rendering/) and [`@cloudflare/playwright`](https://github.com/cloudflare/playwright) for deployment.
 
+<a href="https://glama.ai/mcp/servers/@cloudflare/playwright-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@cloudflare/playwright-mcp/badge" alt="Cloudflare Playwright MCP server" />
+</a>
+
 ### Build and Deploy
 
 Follow these steps to set up and deploy the project:
@@ -35,7 +39,6 @@ You can now start to interact with the model, and it will run necessary tools to
 
 > [!TIP]
 > For best results, give simple instructions consisting of one single action, e. g., "Create a new todo entry", "Go to cloudflare site", "Take a screenshot"
-
 
 Example of a conversation:
 
