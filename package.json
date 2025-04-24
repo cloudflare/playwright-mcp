@@ -1,17 +1,20 @@
 {
-  "name": "@playwright/mcp",
-  "version": "0.0.7",
-  "description": "Playwright Tools for MCP",
+  "name": "@cloudflare/playwright-mcp",
+  "version": "0.0.1",
+  "description": "Cloudflare Playwright Tools for MCP",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/microsoft/playwright-mcp.git"
+    "url": "git+https://github.com/cloudflare/playwright-mcp.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=18"
   },
   "author": {
-    "name": "Microsoft Corporation"
+    "name": "Microsoft Corporation, Cloudflare Inc."
   },
   "license": "Apache-2.0",
   "scripts": {
