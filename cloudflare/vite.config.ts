@@ -34,6 +34,8 @@ export default defineConfig({
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
       'fs': '@cloudflare/playwright/fs',
+
+      '../package.json': path.resolve(__dirname, './package.json'),
     },
   },
   build: {
@@ -101,11 +103,19 @@ export default defineConfig({
         'cloudflare:workers',
 
         /@modelcontextprotocol\/sdk\/.*/,
-        'agents',
+        'agents/mcp',
         'yaml',
         'zod',
         'zod-to-json-schema',
       ]
     },
+    commonjsOptions: {
+      transformMixedEsModules: true,
+      extensions: ['.ts', '.js'],
+      include: [
+        path.resolve(__dirname, '../src/**/*'),
+        /node_modules/,
+      ],
+    }
   },
 });
