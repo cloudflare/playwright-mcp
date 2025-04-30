@@ -3,7 +3,8 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "lib": ["ESNext"],
   },
   "include": [
     "worker-configuration.d.ts",
