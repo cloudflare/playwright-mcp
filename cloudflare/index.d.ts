@@ -21,4 +21,3 @@ type Options = {
     capabilities?: ToolCapability[];
 };
 export declare function createMcpAgent(endpoint: BrowserEndpoint, options?: Options): typeof McpAgent<typeof env, {}, {}>;
-export {};

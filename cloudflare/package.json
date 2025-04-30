@@ -22,6 +22,12 @@
       "import": "./lib/esm/index.js",
       "require": "./lib/cjs/index.js",
       "default": "./lib/esm/index.js"
+    },
+    "./ai": {
+      "types": "./ai.d.ts",
+      "import": "./lib/esm/ai.js",
+      "require": "./lib/cjs/ai.js",
+      "default": "./lib/esm/ai.js"
     }
   },
   "dependencies": {

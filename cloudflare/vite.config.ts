@@ -45,6 +45,7 @@ export default defineConfig({
     lib: {
       name: '@cloudflare/playwright',
       entry: [
+        path.resolve(__dirname, './src/ai.ts'),
         path.resolve(__dirname, './src/index.ts'),
       ],
     },

@@ -7,6 +7,9 @@ import { endpointURLString } from '@cloudflare/playwright';
 import { createServer } from '../../src';
 import { ToolCapability } from '../../src/tools/tool';
 
+export { snapshotTools } from '../../src';
+export { Context } from '../../src/context';
+
 type Options = {
   vision?: boolean;
   capabilities?: ToolCapability[];
