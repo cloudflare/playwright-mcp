@@ -1,0 +1,22 @@
+name = "playwright-playground"
+main = "src/server.ts"
+compatibility_date = "2025-05-09"
+compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
+
+[browser]
+binding = "BROWSER"
+
+[ai]
+binding = "AI"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+[[durable_objects.bindings]]
+name = "AGENT"
+class_name = "PlaywrightAIAgent"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PlaywrightAIAgent"]

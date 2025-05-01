@@ -1,0 +1,14 @@
+.code-container {
+  width: 100%;
+  border-radius: var(--border-radius);
+  overflow: auto;
+  border: 1px solid var(--border-color);
+}
+
+.code-container pre {
+  margin: 0;
+}
+
+.code-container.visible {
+  display: block;
+}

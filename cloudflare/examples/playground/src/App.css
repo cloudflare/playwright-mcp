@@ -1,0 +1,85 @@
+:root {
+  --primary-color: #e67211;
+  --primary-hover: #f48120;
+  --text-color: #404041;
+  --border-color: #e8e8e8;
+  --bg-color: #fff;
+  --bg-secondary: #f7f7f7;
+  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --border-radius: 4px;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+}
+
+.app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  gap: var(--spacing-sm);
+}
+
+.app h1 {
+  color: var(--primary-color);
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 1.5rem;
+}
+
+.title-icon {
+  width: 80px;
+  height: 80px;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.mode-selector {
+  margin-bottom: var(--spacing-lg);
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: center;
+}
+
+.screenshot {
+  max-width: 100%;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  height: auto;
+  display: block;
+}
+
+/* Shared spinner component */
+.spinner {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  border: 2px solid var(--primary-color);
+  border-radius: 50%;
+  border-top-color: transparent;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .app {
+    padding: var(--spacing-md);
+  }
+}

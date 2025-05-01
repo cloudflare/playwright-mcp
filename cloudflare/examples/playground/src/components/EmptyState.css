@@ -1,0 +1,22 @@
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  color: #666;
+  min-height: 200px;
+  border-radius: var(--border-radius);
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.7;
+}
+
+.empty-state-message {
+  margin: 0;
+  text-align: center;
+}

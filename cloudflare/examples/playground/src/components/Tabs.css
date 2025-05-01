@@ -1,0 +1,39 @@
+.view-tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 2px solid var(--border-color);
+  padding: 0;
+  gap: 0;
+  background: transparent;
+  justify-content: space-between;
+}
+
+.tabs-left, .tabs-right {
+  display: flex;
+  gap: 0;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--text-color);
+  opacity: 0.7;
+  cursor: pointer;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  border-color: var(--bg-secondary) var(--bg-secondary) var(--border-color);
+  color: var(--primary-color);
+}
+
+.tab.active {
+  color: var(--primary-color);
+  opacity: 1;
+  background-color: var(--bg-color);
+  border-color: var(--border-color) var(--border-color) var(--bg-color);
+  border-bottom: 2px solid var(--primary-color);
+}

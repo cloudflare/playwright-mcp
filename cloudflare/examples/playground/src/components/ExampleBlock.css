@@ -1,0 +1,176 @@
+.example-block {
+  width: auto;
+  max-width: 95%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-color);
+  position: relative;
+  margin: 0 auto;
+}
+
+.example-block .header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  margin-right: 0;
+  margin-bottom: var(--spacing-sm);
+}
+
+.example-block .title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.example-block h3 {
+  margin: 0;
+  color: var(--primary-color);
+  line-height: 32px;
+  display: inline-block;
+}
+
+.example-block .close-button {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+.example-block .close-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--primary-color);
+}
+
+.example-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.example-list .command-input-group {
+  margin-bottom: 0;
+}
+
+.example-item {
+  display: flex;
+  align-items: center;
+  padding: 0.35rem;  /* Equal padding all around */
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  min-height: 28px;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.example-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary-color);
+}
+
+.example-mode {
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  padding: 0.25rem 0.25rem 0.25rem 0;
+  display: inline-block;
+  width: 50px;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.example-instruction {
+  flex: 1;
+  color: var(--text-color);
+  font-family: var(--font-mono);
+  margin-right: 0.35rem;  /* Match padding */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0; /* This ensures flex items can shrink below their minimum content size */
+  font-size: 0.9rem;
+}
+
+.play-button {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  padding: 0;
+  margin-left: 0.35rem;
+}
+
+.play-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-color: transparent;
+  color: var(--bg-color);
+}
+
+.play-button:disabled {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--border-color);
+  cursor: not-allowed;
+}
+
+.play-all-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--spacing-sm) auto;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.play-all-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-color: transparent;
+  color: var(--bg-color);
+}
+
+.play-all-button:disabled {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--border-color);
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
