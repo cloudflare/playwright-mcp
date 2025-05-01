@@ -28,7 +28,9 @@ export function createMcpAgent(endpoint: BrowserEndpoint, options?: Options): ty
     ...options,
   });
 
+  // @ts-expect-error
   return class PlaywrightMcpAgent extends McpAgent<typeof env, {}, {}> {
+    // @ts-expect-error
     server = serverPromise;
 
     async init() {
