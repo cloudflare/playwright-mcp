@@ -1,6 +1,7 @@
 import { FormEvent, useState, useRef, useEffect } from 'react';
 import { Mode, Instruction } from '../types';
 import './CommandInput.css';
+import './shared.css';
 
 interface CommandInputProps {
   loading: boolean;

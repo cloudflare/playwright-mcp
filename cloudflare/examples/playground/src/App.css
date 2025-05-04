@@ -1,22 +1,56 @@
 :root {
+  /* Colors */
   --primary-color: #e67211;
   --primary-hover: #f48120;
   --text-color: #404041;
+  --text-secondary: #666;
   --border-color: #e8e8e8;
   --bg-color: #fff;
   --bg-secondary: #f7f7f7;
+  
+  /* Shadows & Effects */
   --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --border-radius: 4px;
+  --focus-glow: 0 0 0 3px rgba(230, 114, 17, 0.2);
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 2rem;
+  
+  /* Typography */
+  --font-family: system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  
+  /* Layout */
+  --border-radius: 4px;
+  --border-radius-lg: 8px;
+  --max-width: 800px;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --font-size-sm: 0.75rem;
+    --font-size-base: 0.875rem;
+    --font-size-lg: 1rem;
+    --font-size-xl: 1.25rem;
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1.5rem;
+  }
 }
 
 .app {
-  max-width: 800px;
+  max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
-  font-family: system-ui, -apple-system, sans-serif;
+  padding: var(--spacing-md);
+  font-family: var(--font-family);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -32,21 +66,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  font-size: 1.5rem;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xl);
 }
 
 .title-icon {
   width: 80px;
   height: 80px;
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--spacing-xs);
 }
 
 .mode-selector {
   margin-bottom: var(--spacing-lg);
   width: 100%;
-  max-width: 800px;
+  max-width: var(--max-width);
   display: flex;
   justify-content: center;
 }
@@ -57,29 +91,4 @@
   border: 1px solid var(--border-color);
   height: auto;
   display: block;
-}
-
-/* Shared spinner component */
-.spinner {
-  width: 12px;
-  height: 12px;
-  min-width: 12px;
-  min-height: 12px;
-  border: 2px solid var(--primary-color);
-  border-radius: 50%;
-  border-top-color: transparent;
-  display: inline-block;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 768px) {
-  .app {
-    padding: var(--spacing-md);
-  }
 }

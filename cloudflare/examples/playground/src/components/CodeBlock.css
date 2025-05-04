@@ -3,12 +3,37 @@
   border-radius: var(--border-radius);
   overflow: auto;
   border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
 }
 
 .code-container pre {
   margin: 0;
+  padding: var(--spacing-md);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
 }
 
 .code-container.visible {
   display: block;
+  opacity: 1;
+  animation: fadeIn var(--transition-fast);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .code-container pre {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    -webkit-overflow-scrolling: touch;
+  }
 }

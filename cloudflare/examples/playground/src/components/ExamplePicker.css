@@ -1,37 +1,48 @@
 .help-message {
   text-align: center;
-  margin: 1rem 0 2rem 0;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin: var(--spacing-md) 0 var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow);
+  max-width: var(--max-width);
 }
 
 .help-message p {
-  margin: 0 0 1rem 0;
-  color: #495057;
-  font-size: 1.1rem;
+  margin: 0 0 var(--spacing-md);
+  color: var(--text-color);
+  font-size: var(--font-size-lg);
 }
 
 .example-select {
-  padding: 0.75rem;
-  font-size: 1rem;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  background-color: white;
-  color: #495057;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--bg-color);
+  color: var(--text-color);
   cursor: pointer;
   width: 100%;
   max-width: 300px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .example-select:hover {
-  border-color: #adb5bd;
+  border-color: var(--primary-color);
 }
 
 .example-select:focus {
   outline: none;
-  border-color: #4dabf7;
-  box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: var(--focus-glow);
+}
+
+@media (max-width: 768px) {
+  .help-message {
+    padding: var(--spacing-md);
+  }
+  
+  .example-select {
+    max-width: 100%;
+  }
 }

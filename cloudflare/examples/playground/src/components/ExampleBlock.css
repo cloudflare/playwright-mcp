@@ -1,20 +1,24 @@
 .example-block {
   width: auto;
-  max-width: 95%;
-  padding: var(--spacing-sm);
+  max-width: 100%;
+  padding: var(--spacing-md);
+  box-sizing: border-box;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   background: var(--bg-color);
+  box-shadow: var(--box-shadow);
   position: relative;
-  margin: 0 auto;
+  margin: 0 auto var(--spacing-lg);
 }
 
 .example-block .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-sm);
-  margin-right: 0;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  min-height: 32px;
+  position: relative;
 }
 
 .example-block .title-section {
@@ -22,23 +26,26 @@
   align-items: center;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
-  width: 100%;
+  flex: 1;
 }
 
 .example-block h3 {
   margin: 0;
+  padding: 0;
   color: var(--primary-color);
+  font-size: var(--font-size-lg);
   line-height: 32px;
-  display: inline-block;
+  height: 32px;
+  display: flex;
+  align-items: center;
 }
 
 .example-block .close-button {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-md);
+  position: static;
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: var(--font-size-lg);
+  font-weight: bold;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -48,129 +55,97 @@
   justify-content: center;
   color: var(--primary-color);
   border-radius: 50%;
-  font-weight: bold;
+  transition: all var(--transition-fast);
 }
 
 .example-block .close-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-secondary);
   color: var(--primary-color);
 }
 
 .example-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--spacing-xs);
   list-style: none;
   margin: 0;
+  padding: 0;
   max-width: 100%;
-  overflow: hidden;
-}
-
-.example-list .command-input-group {
-  margin-bottom: 0;
 }
 
 .example-item {
   display: flex;
   align-items: center;
-  padding: 0.35rem;  /* Equal padding all around */
-  transition: all 0.2s ease;
+  padding: var(--spacing-xs);
+  transition: all var(--transition-fast);
   cursor: pointer;
   user-select: none;
   min-height: 28px;
-  max-width: 100%;
-  overflow: hidden;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
 }
 
 .example-item:hover {
-  background: var(--bg-hover);
-  border-color: var(--primary-color);
+  background: var(--bg-secondary);
 }
 
 .example-mode {
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: var(--font-size-sm);
   color: var(--primary-color);
-  padding: 0.25rem 0.25rem 0.25rem 0;
+  padding: var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) 0;
   display: inline-block;
   width: 50px;
-  font-family: var(--font-mono);
   text-align: center;
 }
 
 .example-instruction {
   flex: 1;
-  color: var(--text-color);
-  font-family: var(--font-mono);
-  margin-right: 0.35rem;  /* Match padding */
+  margin-right: var(--spacing-xs);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0; /* This ensures flex items can shrink below their minimum content size */
-  font-size: 0.9rem;
+  min-width: 0;
+  font-size: var(--font-size-sm);
 }
 
-.play-button {
-  background: transparent;
-  color: var(--primary-color);
-  border: 1px solid var(--primary-color);
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 12px;
-  padding: 0;
-  margin-left: 0.35rem;
-}
-
-.play-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-  border-color: transparent;
-  color: var(--bg-color);
-}
-
-.play-button:disabled {
-  background: transparent;
-  border-color: var(--border-color);
-  color: var(--border-color);
-  cursor: not-allowed;
-}
-
+.play-button,
 .play-all-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: var(--spacing-sm) auto;
-  padding: var(--spacing-sm) var(--spacing-md);
   background: transparent;
   color: var(--primary-color);
   border: 1px solid var(--primary-color);
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1rem;
+  transition: all var(--transition-fast);
 }
 
+.play-button {
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-size-sm);
+  padding: 0;
+  margin-left: var(--spacing-xs);
+}
+
+.play-all-button {
+  margin: var(--spacing-sm) auto;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+}
+
+.play-button:hover:not(:disabled),
 .play-all-button:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   border-color: transparent;
   color: var(--bg-color);
 }
 
+.play-button:disabled,
 .play-all-button:disabled {
   background: transparent;
   border-color: var(--border-color);
   color: var(--border-color);
   cursor: not-allowed;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

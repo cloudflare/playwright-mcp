@@ -1,5 +1,6 @@
 import { Instruction, Example } from '../types';
 import './ExampleBlock.css';
+import './shared.css';
 
 interface ExampleBlockProps {
   example: Example;

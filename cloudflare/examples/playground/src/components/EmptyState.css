@@ -4,9 +4,9 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-lg);
-  color: #666;
+  color: var(--text-secondary);
   min-height: 200px;
-  border-radius: var(--border-radius);
+  margin: var(--spacing-md) 0;
 }
 
 .empty-state-icon {
@@ -14,9 +14,16 @@
   height: 64px;
   margin-bottom: var(--spacing-sm);
   opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.empty-state:hover .empty-state-icon {
+  opacity: 0.9;
 }
 
 .empty-state-message {
   margin: 0;
   text-align: center;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
 }
