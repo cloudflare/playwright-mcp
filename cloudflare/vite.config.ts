@@ -32,7 +32,7 @@ export default defineConfig({
       'zlib': 'node:zlib',
 
       'playwright-core': '@cloudflare/playwright',
-      'playwright': '@cloudflare/playwright/test',
+      'playwright': '@cloudflare/playwright',
       'fs': '@cloudflare/playwright/fs',
 
       '../package.json': path.resolve(__dirname, './package.json'),
@@ -45,6 +45,7 @@ export default defineConfig({
     lib: {
       name: '@cloudflare/playwright',
       entry: [
+        path.resolve(__dirname, './src/ai.ts'),
         path.resolve(__dirname, './src/index.ts'),
       ],
     },

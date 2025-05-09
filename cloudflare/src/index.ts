@@ -7,6 +7,9 @@ import { endpointURLString } from '@cloudflare/playwright';
 import { createServer } from '../../src';
 import { ToolCapability } from '../../src/tools/tool';
 
+export { snapshotTools } from '../../src';
+export { Context } from '../../src/context';
+
 type Options = {
   vision?: boolean;
   capabilities?: ToolCapability[];
@@ -28,7 +31,9 @@ export function createMcpAgent(endpoint: BrowserEndpoint, options?: Options): ty
     ...options,
   });
 
+  // @ts-expect-error
   return class PlaywrightMcpAgent extends McpAgent<typeof env, {}, {}> {
+    // @ts-expect-error
     server = serverPromise;
 
     async init() {

@@ -36,7 +36,7 @@ import type { Tool, ToolCapability } from './tools/tool';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { LaunchOptions } from 'playwright';
 
-const snapshotTools: Tool<any>[] = [
+export const snapshotTools: Tool<any>[] = [
   ...common(true),
   ...console,
   ...dialogs(true),
@@ -50,7 +50,7 @@ const snapshotTools: Tool<any>[] = [
   ...tabs(true),
 ];
 
-const screenshotTools: Tool<any>[] = [
+export const screenshotTools: Tool<any>[] = [
   ...common(false),
   ...console,
   ...dialogs(false),

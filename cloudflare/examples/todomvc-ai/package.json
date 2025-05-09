@@ -1,0 +1,28 @@
+{
+  "name": "@cloudflare/playwright-mcp-template",
+  "version": "0.0.1-next",
+  "description": "Cloudflare Playwright Tools for MCP - Template",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cloudflare/playwright-mcp.git"
+  },
+  "homepage": "https://github.com/cloudflare/playwright-mcp",
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "wrangler dev --remote",
+    "build": "tsc",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/playwright": "^0.0.10",
+    "@cloudflare/playwright-mcp": "file:../.."
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.2",
+    "wrangler": "^4.13.0"
+  }
+}

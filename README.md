@@ -1,6 +1,6 @@
 ## Cloudflare Playwright MCP
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/playwright-mcp/tree/main/cloudflare/example)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/playwright-mcp/tree/main/cloudflare/examples/mcp)
 
 ### Overview
 
@@ -24,7 +24,7 @@ npm run build
 3. Deploy to Cloudflare Workers:
 
 ```bash
-cd cloudflare/example
+cd cloudflare/examples/mcp
 npx wrangler deploy
 ```
 
