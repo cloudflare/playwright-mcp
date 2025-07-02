@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@cloudflare/playwright": "^0.0.10",
-    "agents": "^0.0.75",
+    "@modelcontextprotocol/sdk": "^1.13.3",
+    "agents": "^0.0.101",
     "yaml": "^2.7.1",
     "zod-to-json-schema": "^3.24.5"
   },
