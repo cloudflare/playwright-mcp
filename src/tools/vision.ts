@@ -15,9 +15,9 @@
  */
 
 import { z } from 'zod';
-import { defineTool } from './tool';
+import { defineTool } from './tool.js';
 
-import * as javascript from '../javascript';
+import * as javascript from '../javascript.js';
 
 const elementSchema = z.object({
   element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
@@ -27,8 +27,10 @@ const screenshot = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_screen_capture',
+    title: 'Take a screenshot',
     description: 'Take a screenshot of the current page',
     inputSchema: z.object({}),
+    type: 'readOnly',
   },
 
   handle: async context => {
@@ -59,11 +61,13 @@ const moveMouse = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_screen_move_mouse',
+    title: 'Move mouse',
     description: 'Move mouse to a given position',
     inputSchema: elementSchema.extend({
       x: z.coerce.number().describe('X coordinate'),
       y: z.coerce.number().describe('Y coordinate'),
     }),
+    type: 'readOnly',
   },
 
   handle: async (context, params) => {
@@ -86,11 +90,13 @@ const click = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_screen_click',
+    title: 'Click',
     description: 'Click left mouse button',
     inputSchema: elementSchema.extend({
       x: z.coerce.number().describe('X coordinate'),
       y: z.coerce.number().describe('Y coordinate'),
     }),
+    type: 'destructive',
   },
 
   handle: async (context, params) => {
@@ -117,9 +123,9 @@ const click = defineTool({
 
 const drag = defineTool({
   capability: 'core',
-
   schema: {
     name: 'browser_screen_drag',
+    title: 'Drag mouse',
     description: 'Drag left mouse button',
     inputSchema: elementSchema.extend({
       startX: z.coerce.number().describe('Start X coordinate'),
@@ -127,6 +133,7 @@ const drag = defineTool({
       endX: z.coerce.number().describe('End X coordinate'),
       endY: z.coerce.number().describe('End Y coordinate'),
     }),
+    type: 'destructive',
   },
 
   handle: async (context, params) => {
@@ -158,14 +165,15 @@ const drag = defineTool({
 
 const type = defineTool({
   capability: 'core',
-
   schema: {
     name: 'browser_screen_type',
+    title: 'Type text',
     description: 'Type text',
     inputSchema: z.object({
       text: z.string().describe('Text to type into the element'),
       submit: z.coerce.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
     }),
+    type: 'destructive',
   },
 
   handle: async (context, params) => {

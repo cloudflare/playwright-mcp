@@ -15,42 +15,23 @@
  */
 
 import { z } from 'zod';
-import { defineTool, type ToolFactory } from './tool';
-
-const wait: ToolFactory = captureSnapshot => defineTool({
-  capability: 'wait',
-
-  schema: {
-    name: 'browser_wait',
-    description: 'Wait for a specified time in seconds',
-    inputSchema: z.object({
-      time: z.coerce.number().describe('The time to wait in seconds'),
-    }),
-  },
-
-  handle: async (context, params) => {
-    await new Promise(f => setTimeout(f, Math.min(10000, params.time * 1000)));
-    return {
-      code: [`// Waited for ${params.time} seconds`],
-      captureSnapshot,
-      waitForNetwork: false,
-    };
-  },
-});
+import { defineTool, type ToolFactory } from './tool.js';
 
 const close = defineTool({
   capability: 'core',
 
   schema: {
     name: 'browser_close',
+    title: 'Close browser',
     description: 'Close the page',
     inputSchema: z.object({}),
+    type: 'readOnly',
   },
 
   handle: async context => {
     await context.close();
     return {
-      code: [`// Internal to close the page`],
+      code: [`await page.close()`],
       captureSnapshot: false,
       waitForNetwork: false,
     };
@@ -61,11 +42,13 @@ const resize: ToolFactory = captureSnapshot => defineTool({
   capability: 'core',
   schema: {
     name: 'browser_resize',
+    title: 'Resize browser window',
     description: 'Resize the browser window',
     inputSchema: z.object({
       width: z.coerce.number().describe('Width of the browser window'),
       height: z.coerce.number().describe('Height of the browser window'),
     }),
+    type: 'readOnly',
   },
 
   handle: async (context, params) => {
@@ -91,6 +74,5 @@ const resize: ToolFactory = captureSnapshot => defineTool({
 
 export default (captureSnapshot: boolean) => [
   close,
-  wait(captureSnapshot),
   resize(captureSnapshot)
 ];

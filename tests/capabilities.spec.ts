@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './fixtures';
+import { test, expect } from './fixtures.js';
 
 test('test snapshot tool list', async ({ client }) => {
   const { tools } = await client.listTools();
@@ -23,6 +23,7 @@ test('test snapshot tool list', async ({ client }) => {
     'browser_console_messages',
     'browser_drag',
     'browser_file_upload',
+    'browser_generate_playwright_test',
     'browser_handle_dialog',
     'browser_hover',
     'browser_select_option',
@@ -42,7 +43,7 @@ test('test snapshot tool list', async ({ client }) => {
     'browser_tab_new',
     'browser_tab_select',
     'browser_take_screenshot',
-    'browser_wait',
+    'browser_wait_for',
   ]));
 });
 
@@ -52,6 +53,7 @@ test('test vision tool list', async ({ visionClient }) => {
     'browser_close',
     'browser_console_messages',
     'browser_file_upload',
+    'browser_generate_playwright_test',
     'browser_handle_dialog',
     'browser_install',
     'browser_navigate_back',
@@ -70,17 +72,12 @@ test('test vision tool list', async ({ visionClient }) => {
     'browser_tab_list',
     'browser_tab_new',
     'browser_tab_select',
-    'browser_wait',
+    'browser_wait_for',
   ]));
 });
 
-test('test resources list', async ({ client }) => {
-  const { resources } = await client.listResources();
-  expect(resources).toEqual([]);
-});
-
 test('test capabilities', async ({ startClient }) => {
-  const client = await startClient({
+  const { client } = await startClient({
     args: ['--caps="core"'],
   });
   const { tools } = await client.listTools();

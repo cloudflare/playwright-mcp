@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types';
+import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { z } from 'zod';
-import type { Context } from '../context';
+import type { Context } from '../context.js';
 import type * as playwright from 'playwright';
-export type ToolCapability = 'core' | 'tabs' | 'pdf' | 'history' | 'wait' | 'files' | 'install';
+import type { ToolCapability } from '../../config.js';
 
 export type ToolSchema<Input extends InputType> = {
   name: string;
+  title: string;
   description: string;
   inputSchema: Input;
+  type: 'readOnly' | 'destructive';
 };
 
 type InputType = z.Schema;

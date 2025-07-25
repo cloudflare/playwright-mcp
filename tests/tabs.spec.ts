@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { chromium } from 'playwright';
-
-import { test, expect } from './fixtures';
+import { test, expect } from './fixtures.js';
 
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
@@ -32,7 +30,6 @@ async function createTab(client: Client, title: string, body: string) {
 test('list initial tabs', async ({ client }) => {
   expect(await client.callTool({
     name: 'browser_tab_list',
-    arguments: {},
   })).toHaveTextContent(`### Open tabs
 - 1: (current) [] (about:blank)`);
 });
@@ -41,7 +38,6 @@ test('list first tab', async ({ client }) => {
   await createTab(client, 'Tab one', 'Body one');
   expect(await client.callTool({
     name: 'browser_tab_list',
-    arguments: {},
   })).toHaveTextContent(`### Open tabs
 - 1: [] (about:blank)
 - 2: (current) [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)`);
@@ -63,7 +59,7 @@ test('create new tab', async ({ client }) => {
 - Page Title: Tab one
 - Page Snapshot
 \`\`\`yaml
-- text: Body one
+- generic [active] [ref=e1]: Body one
 \`\`\``);
 
   expect(await createTab(client, 'Tab two', 'Body two')).toHaveTextContent(`
@@ -82,7 +78,7 @@ test('create new tab', async ({ client }) => {
 - Page Title: Tab two
 - Page Snapshot
 \`\`\`yaml
-- text: Body two
+- generic [active] [ref=e1]: Body two
 \`\`\``);
 });
 
@@ -110,7 +106,7 @@ test('select tab', async ({ client }) => {
 - Page Title: Tab one
 - Page Snapshot
 \`\`\`yaml
-- text: Body one
+- generic [active] [ref=e1]: Body one
 \`\`\``);
 });
 
@@ -137,21 +133,18 @@ test('close tab', async ({ client }) => {
 - Page Title: Tab one
 - Page Snapshot
 \`\`\`yaml
-- text: Body one
+- generic [active] [ref=e1]: Body one
 \`\`\``);
 });
 
-test('reuse first tab when navigating', async ({ startClient, cdpEndpoint }) => {
-  const browser = await chromium.connectOverCDP(cdpEndpoint);
-  const [context] = browser.contexts();
-  const pages = context.pages();
+test('reuse first tab when navigating', async ({ startClient, cdpServer, server }) => {
+  const browserContext = await cdpServer.start();
+  const pages = browserContext.pages();
 
-  const client = await startClient({ args: [`--cdp-endpoint=${cdpEndpoint}`] });
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
   await client.callTool({
     name: 'browser_navigate',
-    arguments: {
-      url: 'data:text/html,<title>Title</title><body>Body</body>',
-    },
+    arguments: { url: server.HELLO_WORLD },
   });
 
   expect(pages.length).toBe(1);
