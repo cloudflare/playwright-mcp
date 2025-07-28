@@ -4,8 +4,10 @@ import { env } from 'cloudflare:workers';
 import type { BrowserEndpoint } from '@cloudflare/playwright';
 
 import { endpointURLString } from '@cloudflare/playwright';
-import { createServer } from '../../src';
-import { ToolCapability } from '../../src/tools/tool';
+import { createConnection } from '../../src/index.js';
+import { ToolCapability } from '../../config.js';
+
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 type Options = {
   vision?: boolean;
@@ -19,17 +21,16 @@ export function createMcpAgent(endpoint: BrowserEndpoint, options?: Options): ty
       ? endpoint.toString()
       : endpointURLString(endpoint);
 
-  const serverPromise = createServer({
-    browser: 'chromium',
-    userDataDir: '/playwright/user-data',
-    headless: true,
-    cdpEndpoint,
-    capabilities: ['core', 'tabs', 'pdf', 'history', 'wait', 'files'],
+  const connection = createConnection({
+    capabilities: ['core', 'tabs', 'pdf', 'history', 'wait', 'files', 'testing'],
+    browser: {
+      cdpEndpoint,
+    },
     ...options,
   });
 
   return class PlaywrightMcpAgent extends McpAgent<typeof env, {}, {}> {
-    server = serverPromise;
+    server = connection.then(server => server.server as unknown as Server);
 
     async init() {
       // do nothing
