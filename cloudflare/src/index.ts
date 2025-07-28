@@ -9,6 +9,8 @@ import { ToolCapability } from '../../config.js';
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
+export { createToolsProvider as experimental_createToolsProvider } from './experimental.js';
+
 type Options = {
   vision?: boolean;
   capabilities?: ToolCapability[];
