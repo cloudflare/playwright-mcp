@@ -24,7 +24,7 @@ import { generateLocator } from './utils.js';
 import type * as playwright from 'playwright';
 
 const screenshotSchema = z.object({
-  raw: z.boolean().optional().describe('Whether to return without compression (in PNG format). Default is false, which returns a JPEG image.'),
+  raw: z.coerce.boolean().optional().describe('Whether to return without compression (in PNG format). Default is false, which returns a JPEG image.'),
   filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified.'),
   element: z.string().optional().describe('Human-readable element description used to obtain permission to screenshot the element. If not provided, the screenshot will be taken of viewport. If element is provided, ref must be provided too.'),
   ref: z.string().optional().describe('Exact target element reference from the page snapshot. If not provided, the screenshot will be taken of viewport. If ref is provided, element must be provided too.'),

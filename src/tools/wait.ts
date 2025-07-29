@@ -25,7 +25,7 @@ const wait: ToolFactory = captureSnapshot => defineTool({
     title: 'Wait for',
     description: 'Wait for text to appear or disappear or a specified time to pass',
     inputSchema: z.object({
-      time: z.number().optional().describe('The time to wait in seconds'),
+      time: z.coerce.number().optional().describe('The time to wait in seconds'),
       text: z.string().optional().describe('The text to wait for'),
       textGone: z.string().optional().describe('The text to wait for to disappear'),
     }),
