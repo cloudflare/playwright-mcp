@@ -19,7 +19,7 @@ import { env } from 'cloudflare:workers';
 import { McpAgent } from 'agents/mcp';
 import { BrowserEndpoint } from '@cloudflare/playwright';
 
-type ToolCapability = 'core' | 'tabs' | 'pdf' | 'history' | 'wait' | 'files';
+export type ToolCapability = 'core' | 'tabs' | 'pdf' | 'history' | 'wait' | 'files';
 
 type Options = {
     /**

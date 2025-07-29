@@ -7,3 +7,4 @@
 
 # Include playwright core and test entry points
 !index.d.ts
+!experimental.d.ts

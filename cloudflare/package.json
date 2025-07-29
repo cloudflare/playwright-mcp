@@ -22,6 +22,12 @@
       "import": "./lib/esm/index.js",
       "require": "./lib/cjs/index.js",
       "default": "./lib/esm/index.js"
+    },
+    "./experimental": {
+      "types": "./experimental.d.ts",
+      "import": "./lib/esm/experimental.js",
+      "require": "./lib/cjs/experimental.js",
+      "default": "./lib/esm/experimental.js"
     }
   },
   "dependencies": {
@@ -34,5 +40,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250725.0",
     "vite": "^7.0.6"
+  },
+  "peerDependencies": {
+    "ai": "^4.3.19"
   }
 }

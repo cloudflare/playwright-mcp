@@ -47,6 +47,7 @@ export default defineConfig({
       name: '@cloudflare/playwright',
       entry: [
         path.resolve(__dirname, './src/index.ts'),
+        path.resolve(__dirname, './src/experimental.ts'),
       ],
     },
     // prevents __defProp, __defNormalProp, __publicField in compiled code
