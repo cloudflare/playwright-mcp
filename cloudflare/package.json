@@ -25,14 +25,14 @@
     }
   },
   "dependencies": {
-    "@cloudflare/playwright": "^0.0.10",
-    "@modelcontextprotocol/sdk": "^1.13.3",
-    "agents": "^0.0.101",
-    "yaml": "^2.7.1",
-    "zod-to-json-schema": "^3.24.5"
+    "@cloudflare/playwright": "^0.0.11",
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "agents": "^0.0.109",
+    "yaml": "^2.8.0",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250420.0",
-    "vite": "^6.3.4"
+    "@cloudflare/workers-types": "^4.20250725.0",
+    "vite": "^7.0.6"
   }
 }

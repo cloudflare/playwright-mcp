@@ -14,23 +14,11 @@
  * limitations under the License.
  */
 
-import type { Context } from '../context';
+import { test, expect } from './fixtures.js';
 
-export type ResourceSchema = {
-  uri: string;
-  name: string;
-  description?: string;
-  mimeType?: string;
-};
-
-export type ResourceResult = {
-  uri: string;
-  mimeType?: string;
-  text?: string;
-  blob?: string;
-};
-
-export type Resource = {
-  schema: ResourceSchema;
-  read: (context: Context, uri: string) => Promise<ResourceResult[]>;
-};
+test('browser_install', async ({ client, mcpBrowser }) => {
+  test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
+  expect(await client.callTool({
+    name: 'browser_install',
+  })).toContainTextContent(`No open pages available.`);
+});

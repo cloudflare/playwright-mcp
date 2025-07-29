@@ -14,123 +14,67 @@
  * limitations under the License.
  */
 
-import http from 'http';
-
 import { program } from 'commander';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+// @ts-ignore
+import { startTraceViewerServer } from 'playwright-core/lib/server';
 
-
-import { createServer } from './index';
-import { ServerList } from './server';
-
-import assert from 'assert';
-import { ToolCapability } from './tools/tool';
-
-const packageJSON = require('../package.json');
+import { startHttpServer, startHttpTransport, startStdioTransport } from './transport.js';
+import { resolveCLIConfig } from './config.js';
+import { Server } from './server.js';
+import { packageJSON } from './package.js';
 
 program
     .version('Version ' + packageJSON.version)
     .name(packageJSON.name)
-    .option('--browser <browser>', 'Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
-    .option('--caps <caps>', 'Comma-separated list of capabilities to enable, possible values: tabs, pdf, history, wait, files, install. Default is all.')
+    .option('--allowed-origins <origins>', 'semicolon-separated list of origins to allow the browser to request. Default is to allow all.', semicolonSeparatedList)
+    .option('--blocked-origins <origins>', 'semicolon-separated list of origins to block the browser from requesting. Blocklist is evaluated before allowlist. If used without the allowlist, requests not matching the blocklist are still allowed.', semicolonSeparatedList)
+    .option('--block-service-workers', 'block service workers')
+    .option('--browser <browser>', 'browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
+    .option('--browser-agent <endpoint>', 'Use browser agent (experimental).')
+    .option('--caps <caps>', 'comma-separated list of capabilities to enable, possible values: tabs, pdf, history, wait, files, install. Default is all.')
     .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
-    .option('--executable-path <path>', 'Path to the browser executable.')
-    .option('--headless', 'Run browser in headless mode, headed by default')
-    .option('--port <port>', 'Port to listen on for SSE transport.')
-    .option('--user-data-dir <path>', 'Path to the user data directory')
+    .option('--config <path>', 'path to the configuration file.')
+    .option('--device <device>', 'device to emulate, for example: "iPhone 15"')
+    .option('--executable-path <path>', 'path to the browser executable.')
+    .option('--headless', 'run browser in headless mode, headed by default')
+    .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
+    .option('--ignore-https-errors', 'ignore https errors')
+    .option('--isolated', 'keep the browser profile in memory, do not save it to disk.')
+    .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow", "omit", or "auto". Defaults to "auto", which sends images if the client can display them.')
+    .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
+    .option('--output-dir <path>', 'path to the directory for output files.')
+    .option('--port <port>', 'port to listen on for SSE transport.')
+    .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
+    .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+    .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
+    .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
+    .option('--user-agent <ua string>', 'specify user agent string')
+    .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
+    .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"')
     .option('--vision', 'Run server that uses screenshots (Aria snapshots are used by default)')
     .action(async options => {
-      const serverList = new ServerList(() => createServer({
-        browser: options.browser,
-        userDataDir: options.userDataDir,
-        headless: options.headless,
-        executablePath: options.executablePath,
-        vision: !!options.vision,
-        cdpEndpoint: options.cdpEndpoint,
-        capabilities: options.caps?.split(',').map((c: string) => c.trim() as ToolCapability),
-      }));
-      setupExitWatchdog(serverList);
+      const config = await resolveCLIConfig(options);
+      const httpServer = config.server.port !== undefined ? await startHttpServer(config.server) : undefined;
 
-      if (options.port) {
-        startSSEServer(+options.port, serverList);
-      } else {
-        const server = await serverList.create();
-        await server.connect(new StdioServerTransport());
+      const server = new Server(config);
+      server.setupExitWatchdog();
+
+      if (httpServer)
+        startHttpTransport(httpServer, server);
+      else
+        await startStdioTransport(server);
+
+      if (config.saveTrace) {
+        const server = await startTraceViewerServer();
+        const urlPrefix = server.urlPrefix('human-readable');
+        const url = urlPrefix + '/trace/index.html?trace=' + config.browser.launchOptions.tracesDir + '/trace.json';
+        // eslint-disable-next-line no-console
+        console.error('\nTrace viewer listening on ' + url);
       }
     });
 
-function setupExitWatchdog(serverList: ServerList) {
-  const handleExit = async () => {
-    setTimeout(() => process.exit(0), 15000);
-    await serverList.closeAll();
-    process.exit(0);
-  };
-
-  process.stdin.on('close', handleExit);
-  process.on('SIGINT', handleExit);
-  process.on('SIGTERM', handleExit);
+function semicolonSeparatedList(value: string): string[] {
+  return value.split(';').map(v => v.trim());
 }
 
-program.parse(process.argv);
-
-async function startSSEServer(port: number, serverList: ServerList) {
-  const sessions = new Map<string, SSEServerTransport>();
-  const httpServer = http.createServer(async (req, res) => {
-    if (req.method === 'POST') {
-      const searchParams = new URL(`http://localhost${req.url}`).searchParams;
-      const sessionId = searchParams.get('sessionId');
-      if (!sessionId) {
-        res.statusCode = 400;
-        res.end('Missing sessionId');
-        return;
-      }
-      const transport = sessions.get(sessionId);
-      if (!transport) {
-        res.statusCode = 404;
-        res.end('Session not found');
-        return;
-      }
-
-      await transport.handlePostMessage(req, res);
-      return;
-    } else if (req.method === 'GET') {
-      const transport = new SSEServerTransport('/sse', res);
-      sessions.set(transport.sessionId, transport);
-      const server = await serverList.create();
-      res.on('close', () => {
-        sessions.delete(transport.sessionId);
-        serverList.close(server).catch(e => console.error(e));
-      });
-      await server.connect(transport);
-      return;
-    } else {
-      res.statusCode = 405;
-      res.end('Method not allowed');
-    }
-  });
-
-  httpServer.listen(port, () => {
-    const address = httpServer.address();
-    assert(address, 'Could not bind server socket');
-    let url: string;
-    if (typeof address === 'string') {
-      url = address;
-    } else {
-      const resolvedPort = address.port;
-      let resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
-      if (resolvedHost === '0.0.0.0' || resolvedHost === '[::]')
-        resolvedHost = 'localhost';
-      url = `http://${resolvedHost}:${resolvedPort}`;
-    }
-    console.log(`Listening on ${url}`);
-    console.log('Put this in your client config:');
-    console.log(JSON.stringify({
-      'mcpServers': {
-        'playwright': {
-          'url': `${url}/sse`
-        }
-      }
-    }, undefined, 2));
-  });
-}
+void program.parseAsync(process.argv);

@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import os from 'os';
-
 import { z } from 'zod';
 
-import { sanitizeForFilePath } from './utils';
-import { generateLocator } from '../context';
-import * as javascript from '../javascript';
-
-import type * as playwright from 'playwright';
-import { defineTool } from './tool';
+import { defineTool } from './tool.js';
+import * as javascript from '../javascript.js';
+import { generateLocator } from './utils.js';
 
 const snapshot = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_snapshot',
+    title: 'Page snapshot',
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
     inputSchema: z.object({}),
+    type: 'readOnly',
   },
 
   handle: async context => {
@@ -50,26 +46,36 @@ const elementSchema = z.object({
   ref: z.string().describe('Exact target element reference from the page snapshot'),
 });
 
+const clickSchema = elementSchema.extend({
+  doubleClick: z.boolean().optional().describe('Whether to perform a double click instead of a single click'),
+});
+
 const click = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_click',
+    title: 'Click',
     description: 'Perform click on a web page',
-    inputSchema: elementSchema,
+    inputSchema: clickSchema,
+    type: 'destructive',
   },
 
   handle: async (context, params) => {
     const tab = context.currentTabOrDie();
-    const locator = tab.snapshotOrDie().refLocator(params.ref);
+    const locator = tab.snapshotOrDie().refLocator(params);
 
-    const code = [
-      `// Click ${params.element}`,
-      `await page.${await generateLocator(locator)}.click();`
-    ];
+    const code: string[] = [];
+    if (params.doubleClick) {
+      code.push(`// Double click ${params.element}`);
+      code.push(`await page.${await generateLocator(locator)}.dblclick();`);
+    } else {
+      code.push(`// Click ${params.element}`);
+      code.push(`await page.${await generateLocator(locator)}.click();`);
+    }
 
     return {
       code,
-      action: () => locator.click(),
+      action: () => params.doubleClick ? locator.dblclick() : locator.click(),
       captureSnapshot: true,
       waitForNetwork: true,
     };
@@ -80,6 +86,7 @@ const drag = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_drag',
+    title: 'Drag mouse',
     description: 'Perform drag and drop between two elements',
     inputSchema: z.object({
       startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
@@ -87,12 +94,13 @@ const drag = defineTool({
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
       endRef: z.string().describe('Exact target element reference from the page snapshot'),
     }),
+    type: 'destructive',
   },
 
   handle: async (context, params) => {
     const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const startLocator = snapshot.refLocator(params.startRef);
-    const endLocator = snapshot.refLocator(params.endRef);
+    const startLocator = snapshot.refLocator({ ref: params.startRef, element: params.startElement });
+    const endLocator = snapshot.refLocator({ ref: params.endRef, element: params.endElement });
 
     const code = [
       `// Drag ${params.startElement} to ${params.endElement}`,
@@ -112,13 +120,15 @@ const hover = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_hover',
+    title: 'Hover mouse',
     description: 'Hover over element on page',
     inputSchema: elementSchema,
+    type: 'readOnly',
   },
 
   handle: async (context, params) => {
     const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const locator = snapshot.refLocator(params.ref);
+    const locator = snapshot.refLocator(params);
 
     const code = [
       `// Hover over ${params.element}`,
@@ -144,13 +154,15 @@ const type = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_type',
+    title: 'Type text',
     description: 'Type text into editable element',
     inputSchema: typeSchema,
+    type: 'destructive',
   },
 
   handle: async (context, params) => {
     const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const locator = snapshot.refLocator(params.ref);
+    const locator = snapshot.refLocator(params);
 
     const code: string[] = [];
     const steps: (() => Promise<void>)[] = [];
@@ -188,13 +200,15 @@ const selectOption = defineTool({
   capability: 'core',
   schema: {
     name: 'browser_select_option',
+    title: 'Select option',
     description: 'Select an option in a dropdown',
     inputSchema: selectOptionSchema,
+    type: 'destructive',
   },
 
   handle: async (context, params) => {
     const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const locator = snapshot.refLocator(params.ref);
+    const locator = snapshot.refLocator(params);
 
     const code = [
       `// Select options [${params.values.join(', ')}] in ${params.element}`,
@@ -210,65 +224,6 @@ const selectOption = defineTool({
   },
 });
 
-const screenshotSchema = z.object({
-  raw: z.coerce.boolean().optional().describe('Whether to return without compression (in PNG format). Default is false, which returns a JPEG image.'),
-  element: z.string().optional().transform(v => v === 'null' ? undefined : v).describe('Human-readable element description used to obtain permission to screenshot the element. If not provided, the screenshot will be taken of viewport. If element is provided, ref must be provided too.'),
-  ref: z.string().optional().transform(v => v === 'null' ? undefined : v).describe('Exact target element reference from the page snapshot. If not provided, the screenshot will be taken of viewport. If ref is provided, element must be provided too.'),
-}).refine(data => {
-  return !!data.element === !!data.ref;
-}, {
-  message: 'Both element and ref must be provided or neither.',
-  path: ['ref', 'element']
-});
-
-const screenshot = defineTool({
-  capability: 'core',
-  schema: {
-    name: 'browser_take_screenshot',
-    description: `Take a screenshot of the current page. You can't perform actions based on the screenshot, use browser_snapshot for actions.`,
-    inputSchema: screenshotSchema,
-  },
-
-  handle: async (context, params) => {
-    const tab = context.currentTabOrDie();
-    const snapshot = tab.snapshotOrDie();
-    const fileType = params.raw ? 'png' : 'jpeg';
-    const fileName = path.join(os.tmpdir(), sanitizeForFilePath(`page-${new Date().toISOString()}`)) + `.${fileType}`;
-    const options: playwright.PageScreenshotOptions = { type: fileType, quality: fileType === 'png' ? undefined : 50, scale: 'css', path: fileName };
-    const isElementScreenshot = params.element && params.ref;
-
-    const code = [
-      `// Screenshot ${isElementScreenshot ? params.element : 'viewport'} and save it as ${fileName}`,
-    ];
-
-    const locator = params.ref ? snapshot.refLocator(params.ref) : null;
-
-    if (locator)
-      code.push(`await page.${await generateLocator(locator)}.screenshot(${javascript.formatObject(options)});`);
-    else
-      code.push(`await page.screenshot(${javascript.formatObject(options)});`);
-
-    const action = async () => {
-      const screenshot = locator ? await locator.screenshot(options) : await tab.page.screenshot(options);
-      return {
-        content: [{
-          type: 'image' as 'image',
-          data: screenshot.toString('base64'),
-          mimeType: fileType === 'png' ? 'image/png' : 'image/jpeg',
-        }]
-      };
-    };
-
-    return {
-      code,
-      action,
-      captureSnapshot: true,
-      waitForNetwork: false,
-    };
-  }
-});
-
-
 export default [
   snapshot,
   click,
@@ -276,5 +231,4 @@ export default [
   hover,
   type,
   selectOption,
-  screenshot,
 ];

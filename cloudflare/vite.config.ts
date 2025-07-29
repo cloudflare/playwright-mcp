@@ -33,9 +33,10 @@ export default defineConfig({
 
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
+      'node:fs': '@cloudflare/playwright/fs',
       'fs': '@cloudflare/playwright/fs',
 
-      '../package.json': path.resolve(__dirname, './package.json'),
+      './package.js': path.resolve(__dirname, './src/package.ts'),
     },
   },
   build: {
