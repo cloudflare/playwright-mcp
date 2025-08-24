@@ -15,16 +15,15 @@
  */
 
 import { z } from 'zod';
-import { defineTool } from './tool.js';
+import { defineTabTool } from './tool.js';
 
-import * as javascript from '../javascript.js';
-import { outputFile } from '../config.js';
+import * as javascript from '../utils/codegen.js';
 
 const pdfSchema = z.object({
   filename: z.string().optional().describe('File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified.'),
 });
 
-const pdf = defineTool({
+const pdf = defineTabTool({
   capability: 'pdf',
 
   schema: {
@@ -35,21 +34,11 @@ const pdf = defineTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const tab = context.currentTabOrDie();
-    const fileName = await outputFile(context.config, params.filename ?? `page-${new Date().toISOString()}.pdf`);
-
-    const code = [
-      `// Save page as ${fileName}`,
-      `await page.pdf(${javascript.formatObject({ path: fileName })});`,
-    ];
-
-    return {
-      code,
-      action: async () => tab.page.pdf({ path: fileName }).then(() => {}),
-      captureSnapshot: false,
-      waitForNetwork: false,
-    };
+  handle: async (tab, params, response) => {
+    const fileName = await tab.context.outputFile(params.filename ?? `page-${new Date().toISOString()}.pdf`);
+    response.addCode(`await page.pdf(${javascript.formatObject({ path: fileName })});`);
+    response.addResult(`Saved page as ${fileName}`);
+    await tab.page.pdf({ path: fileName });
   },
 });
 

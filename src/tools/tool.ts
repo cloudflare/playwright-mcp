@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { z } from 'zod';
 import type { Context } from '../context.js';
 import type * as playwright from 'playwright';
 import type { ToolCapability } from '../../config.js';
-
-export type ToolSchema<Input extends InputType> = {
-  name: string;
-  title: string;
-  description: string;
-  inputSchema: Input;
-  type: 'readOnly' | 'destructive';
-};
-
-type InputType = z.Schema;
+import type { Tab } from '../tab.js';
+import type { Response } from '../response.js';
+import type { ToolSchema } from '../mcp/tool.js';
 
 export type FileUploadModalState = {
   type: 'fileChooser';
@@ -44,25 +36,35 @@ export type DialogModalState = {
 
 export type ModalState = FileUploadModalState | DialogModalState;
 
-export type ToolActionResult = { content?: (ImageContent | TextContent)[] } | undefined | void;
-
-export type ToolResult = {
-  code: string[];
-  action?: () => Promise<ToolActionResult>;
-  captureSnapshot: boolean;
-  waitForNetwork: boolean;
-  resultOverride?: ToolActionResult;
+export type Tool<Input extends z.Schema = z.Schema> = {
+  capability: ToolCapability;
+  schema: ToolSchema<Input>;
+  handle: (context: Context, params: z.output<Input>, response: Response) => Promise<void>;
 };
 
-export type Tool<Input extends InputType = InputType> = {
+export function defineTool<Input extends z.Schema>(tool: Tool<Input>): Tool<Input> {
+  return tool;
+}
+
+export type TabTool<Input extends z.Schema = z.Schema> = {
   capability: ToolCapability;
   schema: ToolSchema<Input>;
   clearsModalState?: ModalState['type'];
-  handle: (context: Context, params: z.output<Input>) => Promise<ToolResult>;
+  handle: (tab: Tab, params: z.output<Input>, response: Response) => Promise<void>;
 };
 
-export type ToolFactory = (snapshot: boolean) => Tool<any>;
-
-export function defineTool<Input extends InputType>(tool: Tool<Input>): Tool<Input> {
-  return tool;
+export function defineTabTool<Input extends z.Schema>(tool: TabTool<Input>): Tool<Input> {
+  return {
+    ...tool,
+    handle: async (context, params, response) => {
+      const tab = context.currentTabOrDie();
+      const modalStates = tab.modalStates().map(state => state.type);
+      if (tool.clearsModalState && !modalStates.includes(tool.clearsModalState))
+        response.addError(`Error: The tool "${tool.schema.name}" can only be used when there is related modal state present.\n` + tab.modalStatesMarkdown().join('\n'));
+      else if (!tool.clearsModalState && modalStates.length)
+        response.addError(`Error: Tool "${tool.schema.name}" does not handle the modal state.\n` + tab.modalStatesMarkdown().join('\n'));
+      else
+        return tool.handle(tab, params, response);
+    },
+  };
 }

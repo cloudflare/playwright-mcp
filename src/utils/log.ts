@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-import fs from 'node:fs';
-import url from 'node:url';
-import path from 'node:path';
+import debug from 'debug';
 
-const __filename = url.fileURLToPath(import.meta.url);
-export const packageJSON = JSON.parse(fs.readFileSync(path.join(path.dirname(__filename), '..', 'package.json'), 'utf8'));
+const errorsDebug = debug('pw:mcp:errors');
+
+export function logUnhandledError(error: unknown) {
+  errorsDebug(error);
+}
+
+export const testDebug = debug('pw:mcp:test');

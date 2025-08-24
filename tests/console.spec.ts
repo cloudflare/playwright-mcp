@@ -37,8 +37,64 @@ test('browser_console_messages', async ({ client, server }) => {
   const resource = await client.callTool({
     name: 'browser_console_messages',
   });
-  expect(resource).toHaveTextContent([
-    '[LOG] Hello, world!',
-    '[ERROR] Error',
-  ].join('\n'));
+  expect(resource).toHaveResponse({
+    result: `[LOG] Hello, world! @ ${server.PREFIX}:4
+[ERROR] Error @ ${server.PREFIX}:5`,
+  });
+});
+
+test('browser_console_messages (page error)', async ({ client, server }) => {
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <script>
+        throw new Error("Error in script");
+      </script>
+    </html>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  });
+
+  const resource = await client.callTool({
+    name: 'browser_console_messages',
+  });
+  expect(resource).toHaveResponse({
+    result: expect.stringContaining(`Error: Error in script`),
+  });
+  expect(resource).toHaveResponse({
+    result: expect.stringContaining(server.PREFIX),
+  });
+});
+
+test('recent console messages', async ({ client, server }) => {
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <button onclick="console.log('Hello, world!');">Click me</button>
+    </html>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  });
+
+  const response = await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Click me',
+      ref: 'e2',
+    },
+  });
+
+  expect(response).toHaveResponse({
+    consoleMessages: expect.stringContaining(`- [LOG] Hello, world! @`),
+  });
 });

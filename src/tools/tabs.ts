@@ -15,120 +15,50 @@
  */
 
 import { z } from 'zod';
-import { defineTool, type ToolFactory } from './tool.js';
+import { defineTool } from './tool.js';
 
-const listTabs = defineTool({
-  capability: 'tabs',
-
-  schema: {
-    name: 'browser_tab_list',
-    title: 'List tabs',
-    description: 'List browser tabs',
-    inputSchema: z.object({}),
-    type: 'readOnly',
-  },
-
-  handle: async context => {
-    await context.ensureTab();
-    return {
-      code: [`// <internal code to list tabs>`],
-      captureSnapshot: false,
-      waitForNetwork: false,
-      resultOverride: {
-        content: [{
-          type: 'text',
-          text: await context.listTabsMarkdown(),
-        }],
-      },
-    };
-  },
-});
-
-const selectTab: ToolFactory = captureSnapshot => defineTool({
-  capability: 'tabs',
+const browserTabs = defineTool({
+  capability: 'core-tabs',
 
   schema: {
-    name: 'browser_tab_select',
-    title: 'Select a tab',
-    description: 'Select a tab by index',
+    name: 'browser_tabs',
+    title: 'Manage tabs',
+    description: 'List, create, close, or select a browser tab.',
     inputSchema: z.object({
-      index: z.coerce.number().describe('The index of the tab to select'),
-    }),
-    type: 'readOnly',
-  },
-
-  handle: async (context, params) => {
-    await context.selectTab(params.index);
-    const code = [
-      `// <internal code to select tab ${params.index}>`,
-    ];
-
-    return {
-      code,
-      captureSnapshot,
-      waitForNetwork: false
-    };
-  },
-});
-
-const newTab: ToolFactory = captureSnapshot => defineTool({
-  capability: 'tabs',
-
-  schema: {
-    name: 'browser_tab_new',
-    title: 'Open a new tab',
-    description: 'Open a new tab',
-    inputSchema: z.object({
-      url: z.string().optional().describe('The URL to navigate to in the new tab. If not provided, the new tab will be blank.'),
-    }),
-    type: 'readOnly',
-  },
-
-  handle: async (context, params) => {
-    await context.newTab();
-    if (params.url)
-      await context.currentTabOrDie().navigate(params.url);
-
-    const code = [
-      `// <internal code to open a new tab>`,
-    ];
-    return {
-      code,
-      captureSnapshot,
-      waitForNetwork: false
-    };
-  },
-});
-
-const closeTab: ToolFactory = captureSnapshot => defineTool({
-  capability: 'tabs',
-
-  schema: {
-    name: 'browser_tab_close',
-    title: 'Close a tab',
-    description: 'Close a tab',
-    inputSchema: z.object({
-      index: z.coerce.number().optional().describe('The index of the tab to close. Closes current tab if not provided.'),
+      action: z.enum(['list', 'new', 'close', 'select']).describe('Operation to perform'),
+      index: z.number().optional().describe('Tab index, used for close/select. If omitted for close, current tab is closed.'),
     }),
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
-    await context.closeTab(params.index);
-    const code = [
-      `// <internal code to close tab ${params.index}>`,
-    ];
-    return {
-      code,
-      captureSnapshot,
-      waitForNetwork: false
-    };
+  handle: async (context, params, response) => {
+    switch (params.action) {
+      case 'list': {
+        await context.ensureTab();
+        response.setIncludeTabs();
+        return;
+      }
+      case 'new': {
+        await context.newTab();
+        response.setIncludeTabs();
+        return;
+      }
+      case 'close': {
+        await context.closeTab(params.index);
+        response.setIncludeSnapshot();
+        return;
+      }
+      case 'select': {
+        if (!params.index)
+          throw new Error('Tab index is required');
+        await context.selectTab(params.index);
+        response.setIncludeSnapshot();
+        return;
+      }
+    }
   },
 });
 
-export default (captureSnapshot: boolean) => [
-  listTabs,
-  newTab(captureSnapshot),
-  selectTab(captureSnapshot),
-  closeTab(captureSnapshot),
+export default [
+  browserTabs,
 ];
