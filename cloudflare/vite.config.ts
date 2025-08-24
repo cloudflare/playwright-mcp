@@ -31,6 +31,9 @@ export default defineConfig({
       'util': 'node:util',
       'zlib': 'node:zlib',
 
+      // imported from src/tools/utils.ts
+      'playwright-core/lib/utils': path.resolve(__dirname, './node_modules/@cloudflare/playwright/lib/esm/packages/playwright-core/src/utils/isomorphic/locatorGenerators.js'),
+
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
       'node:fs': '@cloudflare/playwright/fs',
