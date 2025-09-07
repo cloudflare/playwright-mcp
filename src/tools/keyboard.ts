@@ -47,8 +47,8 @@ const pressKey = defineTabTool({
 
 const typeSchema = elementSchema.extend({
   text: z.string().describe('Text to type into the element'),
-  submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
-  slowly: z.boolean().optional().describe('Whether to type one character at a time. Useful for triggering key handlers in the page. By default entire text is filled in at once.'),
+  submit: z.coerce.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
+  slowly: z.coerce.boolean().optional().describe('Whether to type one character at a time. Useful for triggering key handlers in the page. By default entire text is filled in at once.'),
 });
 
 const type = defineTabTool({

@@ -42,7 +42,7 @@ export const elementSchema = z.object({
 });
 
 const clickSchema = elementSchema.extend({
-  doubleClick: z.boolean().optional().describe('Whether to perform a double click instead of a single click'),
+  doubleClick: z.coerce.boolean().optional().describe('Whether to perform a double click instead of a single click'),
   button: z.enum(['left', 'right', 'middle']).optional().describe('Button to click, defaults to left'),
 });
 
