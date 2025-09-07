@@ -238,4 +238,7 @@ export default [
       'notice/notice': 'off',
     },
   },
+  {
+    ignores: ["cloudflare/example/**/*"],
+  },
 ];
