@@ -58,20 +58,11 @@ export default defineConfig({
       output: [
         {
           format: 'es',
-          dir: 'lib/esm',
+          dir: 'lib',
           preserveModules: true,
           preserveModulesRoot: 'src',
           entryFileNames: '[name].js',
           chunkFileNames: '[name].js',
-        },
-        {
-          format: 'cjs',
-          dir: 'lib/cjs',
-          preserveModules: true,
-          preserveModulesRoot: 'src',
-          entryFileNames: '[name].js',
-          chunkFileNames: '[name].js',
-          exports: 'named',
         },
       ],
       external: [
