@@ -6,6 +6,9 @@ compatibility_flags = ["nodejs_compat"]
 [browser]
 binding = "BROWSER"
 
+[ai]
+binding = "AI"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["PlaywrightMCP"]
