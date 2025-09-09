@@ -26,13 +26,14 @@
   },
   "dependencies": {
     "@cloudflare/playwright": "^0.0.11",
-    "@modelcontextprotocol/sdk": "^1.17.0",
+    "@modelcontextprotocol/sdk": "^1.16.0",
     "agents": "^0.0.109",
     "yaml": "^2.8.0",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250725.0",
+    "pkg-pr-new": "^0.0.59",
     "vite": "^7.0.6"
   }
 }
