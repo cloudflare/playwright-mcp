@@ -26,6 +26,8 @@
     "@cloudflare/playwright": "https://pkg.pr.new/cloudflare/playwright/@cloudflare/playwright@71",
     "@modelcontextprotocol/sdk": "^1.16.0",
     "agents": "^0.0.109",
+    "i": "^0.3.7",
+    "npm": "^11.6.0",
     "yaml": "^2.8.0",
     "zod-to-json-schema": "^3.24.6"
   },
