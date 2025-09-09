@@ -16,8 +16,8 @@
 
 import { z } from 'zod';
 
-import { defineTool } from './tool.js';
-import * as javascript from '../javascript.js';
+import { defineTabTool, defineTool } from './tool.js';
+import * as javascript from '../utils/codegen.js';
 import { generateLocator } from './utils.js';
 
 const snapshot = defineTool({
@@ -30,27 +30,23 @@ const snapshot = defineTool({
     type: 'readOnly',
   },
 
-  handle: async context => {
+  handle: async (context, params, response) => {
     await context.ensureTab();
-
-    return {
-      code: [`// <internal code to capture accessibility snapshot>`],
-      captureSnapshot: true,
-      waitForNetwork: false,
-    };
+    response.setIncludeSnapshot();
   },
 });
 
-const elementSchema = z.object({
+export const elementSchema = z.object({
   element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().describe('Exact target element reference from the page snapshot'),
 });
 
 const clickSchema = elementSchema.extend({
-  doubleClick: z.boolean().optional().describe('Whether to perform a double click instead of a single click'),
+  doubleClick: z.coerce.boolean().optional().describe('Whether to perform a double click instead of a single click'),
+  button: z.enum(['left', 'right', 'middle']).optional().describe('Button to click, defaults to left'),
 });
 
-const click = defineTool({
+const click = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_click',
@@ -60,29 +56,29 @@ const click = defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
-    const tab = context.currentTabOrDie();
-    const locator = tab.snapshotOrDie().refLocator(params);
+  handle: async (tab, params, response) => {
+    response.setIncludeSnapshot();
 
-    const code: string[] = [];
-    if (params.doubleClick) {
-      code.push(`// Double click ${params.element}`);
-      code.push(`await page.${await generateLocator(locator)}.dblclick();`);
-    } else {
-      code.push(`// Click ${params.element}`);
-      code.push(`await page.${await generateLocator(locator)}.click();`);
-    }
+    const locator = await tab.refLocator(params);
+    const button = params.button;
+    const buttonAttr = button ? `{ button: '${button}' }` : '';
 
-    return {
-      code,
-      action: () => params.doubleClick ? locator.dblclick() : locator.click(),
-      captureSnapshot: true,
-      waitForNetwork: true,
-    };
+    if (params.doubleClick)
+      response.addCode(`await page.${await generateLocator(locator)}.dblclick(${buttonAttr});`);
+    else
+      response.addCode(`await page.${await generateLocator(locator)}.click(${buttonAttr});`);
+
+
+    await tab.waitForCompletion(async () => {
+      if (params.doubleClick)
+        await locator.dblclick({ button });
+      else
+        await locator.click({ button });
+    });
   },
 });
 
-const drag = defineTool({
+const drag = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_drag',
@@ -97,26 +93,23 @@ const drag = defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
-    const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const startLocator = snapshot.refLocator({ ref: params.startRef, element: params.startElement });
-    const endLocator = snapshot.refLocator({ ref: params.endRef, element: params.endElement });
+  handle: async (tab, params, response) => {
+    response.setIncludeSnapshot();
 
-    const code = [
-      `// Drag ${params.startElement} to ${params.endElement}`,
-      `await page.${await generateLocator(startLocator)}.dragTo(page.${await generateLocator(endLocator)});`
-    ];
+    const [startLocator, endLocator] = await tab.refLocators([
+      { ref: params.startRef, element: params.startElement },
+      { ref: params.endRef, element: params.endElement },
+    ]);
 
-    return {
-      code,
-      action: () => startLocator.dragTo(endLocator),
-      captureSnapshot: true,
-      waitForNetwork: true,
-    };
+    await tab.waitForCompletion(async () => {
+      await startLocator.dragTo(endLocator);
+    });
+
+    response.addCode(`await page.${await generateLocator(startLocator)}.dragTo(page.${await generateLocator(endLocator)});`);
   },
 });
 
-const hover = defineTool({
+const hover = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_hover',
@@ -126,69 +119,15 @@ const hover = defineTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
-    const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const locator = snapshot.refLocator(params);
+  handle: async (tab, params, response) => {
+    response.setIncludeSnapshot();
 
-    const code = [
-      `// Hover over ${params.element}`,
-      `await page.${await generateLocator(locator)}.hover();`
-    ];
+    const locator = await tab.refLocator(params);
+    response.addCode(`await page.${await generateLocator(locator)}.hover();`);
 
-    return {
-      code,
-      action: () => locator.hover(),
-      captureSnapshot: true,
-      waitForNetwork: true,
-    };
-  },
-});
-
-const typeSchema = elementSchema.extend({
-  text: z.string().describe('Text to type into the element'),
-  submit: z.coerce.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
-  slowly: z.coerce.boolean().optional().describe('Whether to type one character at a time. Useful for triggering key handlers in the page. By default entire text is filled in at once.'),
-});
-
-const type = defineTool({
-  capability: 'core',
-  schema: {
-    name: 'browser_type',
-    title: 'Type text',
-    description: 'Type text into editable element',
-    inputSchema: typeSchema,
-    type: 'destructive',
-  },
-
-  handle: async (context, params) => {
-    const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const locator = snapshot.refLocator(params);
-
-    const code: string[] = [];
-    const steps: (() => Promise<void>)[] = [];
-
-    if (params.slowly) {
-      code.push(`// Press "${params.text}" sequentially into "${params.element}"`);
-      code.push(`await page.${await generateLocator(locator)}.pressSequentially(${javascript.quote(params.text)});`);
-      steps.push(() => locator.pressSequentially(params.text));
-    } else {
-      code.push(`// Fill "${params.text}" into "${params.element}"`);
-      code.push(`await page.${await generateLocator(locator)}.fill(${javascript.quote(params.text)});`);
-      steps.push(() => locator.fill(params.text));
-    }
-
-    if (params.submit) {
-      code.push(`// Submit text`);
-      code.push(`await page.${await generateLocator(locator)}.press('Enter');`);
-      steps.push(() => locator.press('Enter'));
-    }
-
-    return {
-      code,
-      action: () => steps.reduce((acc, step) => acc.then(step), Promise.resolve()),
-      captureSnapshot: true,
-      waitForNetwork: true,
-    };
+    await tab.waitForCompletion(async () => {
+      await locator.hover();
+    });
   },
 });
 
@@ -196,7 +135,7 @@ const selectOptionSchema = elementSchema.extend({
   values: z.array(z.string()).describe('Array of values to select in the dropdown. This can be a single value or multiple values.'),
 });
 
-const selectOption = defineTool({
+const selectOption = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_select_option',
@@ -206,21 +145,15 @@ const selectOption = defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
-    const snapshot = context.currentTabOrDie().snapshotOrDie();
-    const locator = snapshot.refLocator(params);
+  handle: async (tab, params, response) => {
+    response.setIncludeSnapshot();
 
-    const code = [
-      `// Select options [${params.values.join(', ')}] in ${params.element}`,
-      `await page.${await generateLocator(locator)}.selectOption(${javascript.formatObject(params.values)});`
-    ];
+    const locator = await tab.refLocator(params);
+    response.addCode(`await page.${await generateLocator(locator)}.selectOption(${javascript.formatObject(params.values)});`);
 
-    return {
-      code,
-      action: () => locator.selectOption(params.values).then(() => {}),
-      captureSnapshot: true,
-      waitForNetwork: true,
-    };
+    await tab.waitForCompletion(async () => {
+      await locator.selectOption(params.values);
+    });
   },
 });
 
@@ -229,6 +162,5 @@ export default [
   click,
   drag,
   hover,
-  type,
   selectOption,
 ];

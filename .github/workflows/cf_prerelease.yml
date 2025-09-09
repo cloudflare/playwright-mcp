@@ -1,0 +1,24 @@
+name: "Playwright MCP for Cloudflare - Pre-Release"
+permissions:
+  contents: read
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test_smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Generate Pre-Release
+        run: |
+          npm ci
+          cd cloudflare
+          npm run build
+          npx pkg-pr-new publish

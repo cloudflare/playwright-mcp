@@ -19,20 +19,26 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
-      "import": "./lib/esm/index.js",
-      "require": "./lib/cjs/index.js",
-      "default": "./lib/esm/index.js"
+      "default": "./lib/index.js"
+    },
+    "./experimental": {
+      "types": "./experimental.d.ts",
+      "default": "./lib/experimental.js"
     }
   },
   "dependencies": {
-    "@cloudflare/playwright": "^0.0.11",
-    "@modelcontextprotocol/sdk": "^1.17.0",
-    "agents": "^0.0.109",
+    "@cloudflare/playwright": "https://pkg.pr.new/cloudflare/playwright/@cloudflare/playwright@71",
+    "@modelcontextprotocol/sdk": "^1.16.0",
+    "agents": "^0.0.113",
     "yaml": "^2.8.0",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250725.0",
+    "pkg-pr-new": "^0.0.59",
     "vite": "^7.0.6"
+  },
+  "peerDependencies": {
+    "ai": "^4.3.19"
   }
 }

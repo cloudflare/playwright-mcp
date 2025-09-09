@@ -15,9 +15,9 @@
  */
 
 import { z } from 'zod';
-import { defineTool, type ToolFactory } from './tool.js';
+import { defineTool, defineTabTool } from './tool.js';
 
-const navigate: ToolFactory = captureSnapshot => defineTool({
+const navigate = defineTool({
   capability: 'core',
 
   schema: {
@@ -30,25 +30,17 @@ const navigate: ToolFactory = captureSnapshot => defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
+  handle: async (context, params, response) => {
     const tab = await context.ensureTab();
     await tab.navigate(params.url);
 
-    const code = [
-      `// Navigate to ${params.url}`,
-      `await page.goto('${params.url}');`,
-    ];
-
-    return {
-      code,
-      captureSnapshot,
-      waitForNetwork: false,
-    };
+    response.setIncludeSnapshot();
+    response.addCode(`await page.goto('${params.url}');`);
   },
 });
 
-const goBack: ToolFactory = captureSnapshot => defineTool({
-  capability: 'history',
+const goBack = defineTabTool({
+  capability: 'core',
   schema: {
     name: 'browser_navigate_back',
     title: 'Go back',
@@ -57,48 +49,14 @@ const goBack: ToolFactory = captureSnapshot => defineTool({
     type: 'readOnly',
   },
 
-  handle: async context => {
-    const tab = await context.ensureTab();
+  handle: async (tab, params, response) => {
     await tab.page.goBack();
-    const code = [
-      `// Navigate back`,
-      `await page.goBack();`,
-    ];
-
-    return {
-      code,
-      captureSnapshot,
-      waitForNetwork: false,
-    };
+    response.setIncludeSnapshot();
+    response.addCode(`await page.goBack();`);
   },
 });
 
-const goForward: ToolFactory = captureSnapshot => defineTool({
-  capability: 'history',
-  schema: {
-    name: 'browser_navigate_forward',
-    title: 'Go forward',
-    description: 'Go forward to the next page',
-    inputSchema: z.object({}),
-    type: 'readOnly',
-  },
-  handle: async context => {
-    const tab = context.currentTabOrDie();
-    await tab.page.goForward();
-    const code = [
-      `// Navigate forward`,
-      `await page.goForward();`,
-    ];
-    return {
-      code,
-      captureSnapshot,
-      waitForNetwork: false,
-    };
-  },
-});
-
-export default (captureSnapshot: boolean) => [
-  navigate(captureSnapshot),
-  goBack(captureSnapshot),
-  goForward(captureSnapshot),
+export default [
+  navigate,
+  goBack,
 ];

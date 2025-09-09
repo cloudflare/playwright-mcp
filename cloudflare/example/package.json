@@ -16,11 +16,13 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@cloudflare/playwright-mcp": "^0.0.4"
+    "@cloudflare/playwright-mcp": "file:..",
+    "ai": "^4.3.19",
+    "workers-ai-provider": "^0.7.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
     "typescript": "^5.8.2",
-    "wrangler": "^4.13.0"
+    "wrangler": "^4.34.0"
   }
 }

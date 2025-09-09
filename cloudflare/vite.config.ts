@@ -31,6 +31,9 @@ export default defineConfig({
       'util': 'node:util',
       'zlib': 'node:zlib',
 
+      // imported from src/tools/utils.ts
+      'playwright-core/lib/utils': path.resolve(__dirname, './node_modules/@cloudflare/playwright/lib/packages/playwright-core/src/utils/isomorphic/locatorGenerators.js'),
+
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
       'node:fs': '@cloudflare/playwright/fs',
@@ -47,6 +50,7 @@ export default defineConfig({
       name: '@cloudflare/playwright',
       entry: [
         path.resolve(__dirname, './src/index.ts'),
+        path.resolve(__dirname, './src/experimental.ts'),
       ],
     },
     // prevents __defProp, __defNormalProp, __publicField in compiled code
@@ -55,20 +59,11 @@ export default defineConfig({
       output: [
         {
           format: 'es',
-          dir: 'lib/esm',
+          dir: 'lib',
           preserveModules: true,
           preserveModulesRoot: 'src',
           entryFileNames: '[name].js',
           chunkFileNames: '[name].js',
-        },
-        {
-          format: 'cjs',
-          dir: 'lib/cjs',
-          preserveModules: true,
-          preserveModulesRoot: 'src',
-          entryFileNames: '[name].js',
-          chunkFileNames: '[name].js',
-          exports: 'named',
         },
       ],
       external: [
