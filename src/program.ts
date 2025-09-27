@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-import { program } from 'commander';
-// @ts-ignore
-import { startTraceViewerServer } from 'playwright-core/lib/server';
+import { program, Option } from 'commander';
+import * as mcpServer from './mcp/server.js';
+import { commaSeparatedList, resolveCLIConfig, semicolonSeparatedList } from './config.js';
+import { packageJSON } from './utils/package.js';
+import { Context } from './context.js';
+import { contextFactory } from './browserContextFactory.js';
+import { runLoopTools } from './loopTools/main.js';
+import { ProxyBackend } from './mcp/proxyBackend.js';
+import { BrowserServerBackend } from './browserServerBackend.js';
+import { ExtensionContextFactory } from './extension/extensionContextFactory.js';
 
-import { startHttpServer, startHttpTransport, startStdioTransport } from './transport.js';
-import { resolveCLIConfig } from './config.js';
-import { Server } from './server.js';
-import { packageJSON } from './package.js';
+import { runVSCodeTools } from './vscode/host.js';
+import type { MCPProvider } from './mcp/proxyBackend.js';
 
 program
     .version('Version ' + packageJSON.version)
@@ -30,51 +35,112 @@ program
     .option('--blocked-origins <origins>', 'semicolon-separated list of origins to block the browser from requesting. Blocklist is evaluated before allowlist. If used without the allowlist, requests not matching the blocklist are still allowed.', semicolonSeparatedList)
     .option('--block-service-workers', 'block service workers')
     .option('--browser <browser>', 'browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
-    .option('--browser-agent <endpoint>', 'Use browser agent (experimental).')
-    .option('--caps <caps>', 'comma-separated list of capabilities to enable, possible values: tabs, pdf, history, wait, files, install. Default is all.')
+    .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf.', commaSeparatedList)
     .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
     .option('--config <path>', 'path to the configuration file.')
     .option('--device <device>', 'device to emulate, for example: "iPhone 15"')
     .option('--executable-path <path>', 'path to the browser executable.')
+    .option('--extension', 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright MCP Bridge" browser extension to be installed.')
     .option('--headless', 'run browser in headless mode, headed by default')
     .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
     .option('--ignore-https-errors', 'ignore https errors')
     .option('--isolated', 'keep the browser profile in memory, do not save it to disk.')
-    .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow", "omit", or "auto". Defaults to "auto", which sends images if the client can display them.')
+    .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow" or "omit", Defaults to "allow".')
     .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
     .option('--output-dir <path>', 'path to the directory for output files.')
     .option('--port <port>', 'port to listen on for SSE transport.')
     .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
     .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+    .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
     .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
     .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
     .option('--user-agent <ua string>', 'specify user agent string')
     .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
     .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"')
-    .option('--vision', 'Run server that uses screenshots (Aria snapshots are used by default)')
+    .addOption(new Option('--connect-tool', 'Allow to switch between different browser connection methods.').hideHelp())
+    .addOption(new Option('--vscode', 'VS Code tools.').hideHelp())
+    .addOption(new Option('--loop-tools', 'Run loop tools').hideHelp())
+    .addOption(new Option('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
     .action(async options => {
-      const config = await resolveCLIConfig(options);
-      const httpServer = config.server.port !== undefined ? await startHttpServer(config.server) : undefined;
+      setupExitWatchdog();
 
-      const server = new Server(config);
-      server.setupExitWatchdog();
-
-      if (httpServer)
-        startHttpTransport(httpServer, server);
-      else
-        await startStdioTransport(server);
-
-      if (config.saveTrace) {
-        const server = await startTraceViewerServer();
-        const urlPrefix = server.urlPrefix('human-readable');
-        const url = urlPrefix + '/trace/index.html?trace=' + config.browser.launchOptions.tracesDir + '/trace.json';
+      if (options.vision) {
         // eslint-disable-next-line no-console
-        console.error('\nTrace viewer listening on ' + url);
+        console.error('The --vision option is deprecated, use --caps=vision instead');
+        options.caps = 'vision';
       }
+
+      const config = await resolveCLIConfig(options);
+      const browserContextFactory = contextFactory(config);
+      const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir);
+
+      if (options.extension) {
+        const serverBackendFactory: mcpServer.ServerBackendFactory = {
+          name: 'Playwright w/ extension',
+          nameInConfig: 'playwright-extension',
+          version: packageJSON.version,
+          create: () => new BrowserServerBackend(config, extensionContextFactory)
+        };
+        await mcpServer.start(serverBackendFactory, config.server);
+        return;
+      }
+
+      if (options.vscode) {
+        await runVSCodeTools(config);
+        return;
+      }
+
+      if (options.loopTools) {
+        await runLoopTools(config);
+        return;
+      }
+
+      if (options.connectTool) {
+        const providers: MCPProvider[] = [
+          {
+            name: 'default',
+            description: 'Starts standalone browser',
+            connect: () => mcpServer.wrapInProcess(new BrowserServerBackend(config, browserContextFactory)),
+          },
+          {
+            name: 'extension',
+            description: 'Connect to a browser using the Playwright MCP extension',
+            connect: () => mcpServer.wrapInProcess(new BrowserServerBackend(config, extensionContextFactory)),
+          },
+        ];
+        const factory: mcpServer.ServerBackendFactory = {
+          name: 'Playwright w/ switch',
+          nameInConfig: 'playwright-switch',
+          version: packageJSON.version,
+          create: () => new ProxyBackend(providers),
+        };
+        await mcpServer.start(factory, config.server);
+        return;
+      }
+
+      const factory: mcpServer.ServerBackendFactory = {
+        name: 'Playwright',
+        nameInConfig: 'playwright',
+        version: packageJSON.version,
+        create: () => new BrowserServerBackend(config, browserContextFactory)
+      };
+      await mcpServer.start(factory, config.server);
     });
 
-function semicolonSeparatedList(value: string): string[] {
-  return value.split(';').map(v => v.trim());
+function setupExitWatchdog() {
+  let isExiting = false;
+  const handleExit = async () => {
+    if (isExiting)
+      return;
+    isExiting = true;
+    setTimeout(() => process.exit(0), 15000);
+    await Context.disposeAll();
+    process.exit(0);
+  };
+
+  process.stdin.on('close', handleExit);
+  process.on('SIGINT', handleExit);
+  process.on('SIGTERM', handleExit);
 }
 
 void program.parseAsync(process.argv);

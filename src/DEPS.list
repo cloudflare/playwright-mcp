@@ -1,0 +1,7 @@
+[*]
+./tools/
+./mcp/
+./utils/
+
+[program.ts]
+***

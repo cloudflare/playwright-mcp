@@ -18,18 +18,17 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { devices } from 'playwright';
+import { sanitizeForFilePath } from './utils/fileUtils.js';
 
 import type { Config, ToolCapability } from '../config.js';
 import type { BrowserContextOptions, LaunchOptions } from 'playwright';
-import { sanitizeForFilePath } from './tools/utils.js';
 
 export type CLIOptions = {
   allowedOrigins?: string[];
   blockedOrigins?: string[];
   blockServiceWorkers?: boolean;
   browser?: string;
-  browserAgent?: string;
-  caps?: string;
+  caps?: string[];
   cdpEndpoint?: string;
   config?: string;
   device?: string;
@@ -38,18 +37,18 @@ export type CLIOptions = {
   host?: string;
   ignoreHttpsErrors?: boolean;
   isolated?: boolean;
-  imageResponses?: 'allow' | 'omit' | 'auto';
-  sandbox: boolean;
+  imageResponses?: 'allow' | 'omit';
+  sandbox?: boolean;
   outputDir?: string;
   port?: number;
   proxyBypass?: string;
   proxyServer?: string;
+  saveSession?: boolean;
   saveTrace?: boolean;
   storageState?: string;
   userAgent?: string;
   userDataDir?: string;
   viewportSize?: string;
-  vision?: boolean;
 };
 
 const defaultConfig: FullConfig = {
@@ -69,7 +68,7 @@ const defaultConfig: FullConfig = {
     blockedOrigins: undefined,
   },
   server: {},
-  outputDir: path.join(os.tmpdir(), 'playwright-mcp-output', sanitizeForFilePath(new Date().toISOString())),
+  saveTrace: false,
 };
 
 type BrowserUserConfig = NonNullable<Config['browser']>;
@@ -81,7 +80,7 @@ export type FullConfig = Config & {
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
   },
   network: NonNullable<Config['network']>,
-  outputDir: string;
+  saveTrace: boolean;
   server: NonNullable<Config['server']>,
 };
 
@@ -91,15 +90,16 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
 
 export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
   const configInFile = await loadConfig(cliOptions.config);
-  const cliOverrides = await configFromCLIOptions(cliOptions);
-  const result = mergeConfig(mergeConfig(defaultConfig, configInFile), cliOverrides);
-  // Derive artifact output directory from config.outputDir
-  if (result.saveTrace)
-    result.browser.launchOptions.tracesDir = path.join(result.outputDir, 'traces');
+  const envOverrides = configFromEnv();
+  const cliOverrides = configFromCLIOptions(cliOptions);
+  let result = defaultConfig;
+  result = mergeConfig(result, configInFile);
+  result = mergeConfig(result, envOverrides);
+  result = mergeConfig(result, cliOverrides);
   return result;
 }
 
-export async function configFromCLIOptions(cliOptions: CLIOptions): Promise<Config> {
+export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
   let channel: string | undefined;
   switch (cliOptions.browser) {
@@ -131,7 +131,7 @@ export async function configFromCLIOptions(cliOptions: CLIOptions): Promise<Conf
   };
 
   // --no-sandbox was passed, disable the sandbox
-  if (!cliOptions.sandbox)
+  if (cliOptions.sandbox === false)
     launchOptions.chromiumSandbox = false;
 
   if (cliOptions.proxyServer) {
@@ -172,7 +172,6 @@ export async function configFromCLIOptions(cliOptions: CLIOptions): Promise<Conf
 
   const result: Config = {
     browser: {
-      browserAgent: cliOptions.browserAgent ?? process.env.PW_BROWSER_AGENT,
       browserName,
       isolated: cliOptions.isolated,
       userDataDir: cliOptions.userDataDir,
@@ -184,18 +183,48 @@ export async function configFromCLIOptions(cliOptions: CLIOptions): Promise<Conf
       port: cliOptions.port,
       host: cliOptions.host,
     },
-    capabilities: cliOptions.caps?.split(',').map((c: string) => c.trim() as ToolCapability),
-    vision: !!cliOptions.vision,
+    capabilities: cliOptions.caps as ToolCapability[],
     network: {
       allowedOrigins: cliOptions.allowedOrigins,
       blockedOrigins: cliOptions.blockedOrigins,
     },
+    saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
   };
 
   return result;
+}
+
+function configFromEnv(): Config {
+  const options: CLIOptions = {};
+  options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
+  options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
+  options.blockServiceWorkers = envToBoolean(process.env.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
+  options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
+  options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
+  options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
+  options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
+  options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
+  options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
+  options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
+  options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
+  options.isolated = envToBoolean(process.env.PLAYWRIGHT_MCP_ISOLATED);
+  if (process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES === 'omit')
+    options.imageResponses = 'omit';
+  options.sandbox = envToBoolean(process.env.PLAYWRIGHT_MCP_SANDBOX);
+  options.outputDir = envToString(process.env.PLAYWRIGHT_MCP_OUTPUT_DIR);
+  options.port = envToNumber(process.env.PLAYWRIGHT_MCP_PORT);
+  options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
+  options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
+  options.saveTrace = envToBoolean(process.env.PLAYWRIGHT_MCP_SAVE_TRACE);
+  options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
+  options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
+  options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
+  options.viewportSize = envToString(process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
+  return configFromCLIOptions(options);
 }
 
 async function loadConfig(configFile: string | undefined): Promise<Config> {
@@ -209,10 +238,14 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-export async function outputFile(config: FullConfig, name: string): Promise<string> {
-  await fs.promises.mkdir(config.outputDir, { recursive: true });
+export async function outputFile(config: FullConfig, rootPath: string | undefined, name: string): Promise<string> {
+  const outputDir = config.outputDir
+    ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
+    ?? path.join(os.tmpdir(), 'playwright-mcp-output', sanitizeForFilePath(new Date().toISOString()));
+
+  await fs.promises.mkdir(outputDir, { recursive: true });
   const fileName = sanitizeForFilePath(name);
-  return path.join(config.outputDir, fileName);
+  return path.join(outputDir, fileName);
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
@@ -254,4 +287,34 @@ function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
       ...pickDefined(overrides.server),
     },
   } as FullConfig;
+}
+
+export function semicolonSeparatedList(value: string | undefined): string[] | undefined {
+  if (!value)
+    return undefined;
+  return value.split(';').map(v => v.trim());
+}
+
+export function commaSeparatedList(value: string | undefined): string[] | undefined {
+  if (!value)
+    return undefined;
+  return value.split(',').map(v => v.trim());
+}
+
+function envToNumber(value: string | undefined): number | undefined {
+  if (!value)
+    return undefined;
+  return +value;
+}
+
+function envToBoolean(value: string | undefined): boolean | undefined {
+  if (value === 'true' || value === '1')
+    return true;
+  if (value === 'false' || value === '0')
+    return false;
+  return undefined;
+}
+
+function envToString(value: string | undefined): string | undefined {
+  return value ? value.trim() : undefined;
 }

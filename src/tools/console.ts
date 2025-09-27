@@ -15,9 +15,9 @@
  */
 
 import { z } from 'zod';
-import { defineTool } from './tool.js';
+import { defineTabTool } from './tool.js';
 
-const console = defineTool({
+const console = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_console_messages',
@@ -26,19 +26,8 @@ const console = defineTool({
     inputSchema: z.object({}),
     type: 'readOnly',
   },
-  handle: async context => {
-    const messages = context.currentTabOrDie().consoleMessages();
-    const log = messages.map(message => `[${message.type().toUpperCase()}] ${message.text()}`).join('\n');
-    return {
-      code: [`// <internal code to get console messages>`],
-      action: async () => {
-        return {
-          content: [{ type: 'text', text: log }]
-        };
-      },
-      captureSnapshot: false,
-      waitForNetwork: false,
-    };
+  handle: async (tab, params, response) => {
+    tab.consoleMessages().map(message => response.addResult(message.toString()));
   },
 });
 

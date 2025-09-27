@@ -15,9 +15,13 @@
  */
 
 import { z } from 'zod';
-import { defineTool, type ToolFactory } from './tool.js';
 
-const pressKey: ToolFactory = captureSnapshot => defineTool({
+import { defineTabTool } from './tool.js';
+import { elementSchema } from './snapshot.js';
+import { generateLocator } from './utils.js';
+import * as javascript from '../utils/codegen.js';
+
+const pressKey = defineTabTool({
   capability: 'core',
 
   schema: {
@@ -30,25 +34,56 @@ const pressKey: ToolFactory = captureSnapshot => defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
-    const tab = context.currentTabOrDie();
+  handle: async (tab, params, response) => {
+    response.setIncludeSnapshot();
+    response.addCode(`// Press ${params.key}`);
+    response.addCode(`await page.keyboard.press('${params.key}');`);
 
-    const code = [
-      `// Press ${params.key}`,
-      `await page.keyboard.press('${params.key}');`,
-    ];
-
-    const action = () => tab.page.keyboard.press(params.key);
-
-    return {
-      code,
-      action,
-      captureSnapshot,
-      waitForNetwork: true
-    };
+    await tab.waitForCompletion(async () => {
+      await tab.page.keyboard.press(params.key);
+    });
   },
 });
 
-export default (captureSnapshot: boolean) => [
-  pressKey(captureSnapshot),
+const typeSchema = elementSchema.extend({
+  text: z.string().describe('Text to type into the element'),
+  submit: z.coerce.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
+  slowly: z.coerce.boolean().optional().describe('Whether to type one character at a time. Useful for triggering key handlers in the page. By default entire text is filled in at once.'),
+});
+
+const type = defineTabTool({
+  capability: 'core',
+  schema: {
+    name: 'browser_type',
+    title: 'Type text',
+    description: 'Type text into editable element',
+    inputSchema: typeSchema,
+    type: 'destructive',
+  },
+
+  handle: async (tab, params, response) => {
+    const locator = await tab.refLocator(params);
+
+    await tab.waitForCompletion(async () => {
+      if (params.slowly) {
+        response.setIncludeSnapshot();
+        response.addCode(`await page.${await generateLocator(locator)}.pressSequentially(${javascript.quote(params.text)});`);
+        await locator.pressSequentially(params.text);
+      } else {
+        response.addCode(`await page.${await generateLocator(locator)}.fill(${javascript.quote(params.text)});`);
+        await locator.fill(params.text);
+      }
+
+      if (params.submit) {
+        response.setIncludeSnapshot();
+        response.addCode(`await page.${await generateLocator(locator)}.press('Enter');`);
+        await locator.press('Enter');
+      }
+    });
+  },
+});
+
+export default [
+  pressKey,
+  type,
 ];

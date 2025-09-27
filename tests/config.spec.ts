@@ -37,7 +37,9 @@ test('config user data dir', async ({ startClient, server, mcpMode }, testInfo) 
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
-  })).toContainTextContent(`Hello, world!`);
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`Hello, world!`),
+  });
 
   const files = await fs.promises.readdir(config.browser!.userDataDir!);
   expect(files.length).toBeGreaterThan(0);
@@ -58,6 +60,25 @@ test.describe(() => {
     expect(await client.callTool({
       name: 'browser_navigate',
       arguments: { url: 'data:text/html,<script>document.title = navigator.userAgent</script>' },
-    })).toContainTextContent(`Firefox`);
+    })).toHaveResponse({
+      pageState: expect.stringContaining(`Firefox`),
+    });
+  });
+});
+
+test.describe('sandbox configuration', () => {
+  test('should enable sandbox by default (no --no-sandbox flag)', async () => {
+    const { configFromCLIOptions } = await import('../lib/config.js');
+    const config = configFromCLIOptions({ sandbox: undefined });
+    // When --no-sandbox is not passed, chromiumSandbox should not be set to false
+    // This allows the default (true) to be used
+    expect(config.browser?.launchOptions?.chromiumSandbox).toBeUndefined();
+  });
+
+  test('should disable sandbox when --no-sandbox flag is passed', async () => {
+    const { configFromCLIOptions } = await import('../lib/config.js');
+    const config = configFromCLIOptions({ sandbox: false });
+    // When --no-sandbox is passed, chromiumSandbox should be explicitly set to false
+    expect(config.browser?.launchOptions?.chromiumSandbox).toBe(false);
   });
 });
