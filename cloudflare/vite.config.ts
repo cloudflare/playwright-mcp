@@ -15,6 +15,7 @@ export default defineConfig({
       'crypto': 'node:crypto',
       'dns': 'node:dns',
       'events': 'node:events',
+      'fs': 'node:fs',
       'http': 'node:http',
       'http2': 'node:http2',
       'https': 'node:https',
@@ -36,8 +37,6 @@ export default defineConfig({
 
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
-      'node:fs': '@cloudflare/playwright/fs',
-      'fs': '@cloudflare/playwright/fs',
 
       './package.js': path.resolve(__dirname, './src/package.ts'),
     },
@@ -75,6 +74,7 @@ export default defineConfig({
         'node:crypto',
         'node:dns',
         'node:events',
+        'node:fs',
         'node:http',
         'node:http2',
         'node:https',
@@ -94,7 +94,6 @@ export default defineConfig({
 
         '@cloudflare/playwright',
         '@cloudflare/playwright/test',
-        '@cloudflare/playwright/fs',
         'cloudflare:workers',
 
         /@modelcontextprotocol\/sdk\/.*/,

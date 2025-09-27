@@ -23,15 +23,15 @@
     }
   },
   "dependencies": {
-    "@cloudflare/playwright": "https://pkg.pr.new/cloudflare/playwright/@cloudflare/playwright@71",
-    "@modelcontextprotocol/sdk": "^1.16.0",
-    "agents": "^0.0.109",
-    "yaml": "^2.8.0",
+    "@cloudflare/playwright": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.18.2",
+    "agents": "^0.2.6",
+    "yaml": "^2.8.1",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250725.0",
+    "@cloudflare/workers-types": "^4.20250927.0",
     "pkg-pr-new": "^0.0.59",
-    "vite": "^7.0.6"
+    "vite": "^7.1.7"
   }
 }
