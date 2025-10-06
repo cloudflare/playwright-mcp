@@ -25,6 +25,7 @@ npm run build
 
 ```bash
 cd cloudflare/example
+npm ci
 npx wrangler deploy
 ```
 
