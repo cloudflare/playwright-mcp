@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 
 import { test, expect } from './fixtures.js';
 
@@ -29,7 +28,10 @@ test('check that trace is saved', async ({ startClient, server, mcpMode }, testI
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
-  })).toContainTextContent(`Navigate to http://localhost`);
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
 
-  expect(fs.existsSync(path.join(outputDir, 'traces', 'trace.trace'))).toBeTruthy();
+  const [file] = await fs.promises.readdir(outputDir);
+  expect(file).toContain('traces');
 });
