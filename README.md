@@ -114,7 +114,18 @@ code-insiders --add-mcp '{"name":"cloudflare-playwright","type":"sse","url":"htt
 ```
 
 After installation, the Playwright MCP server will be available for use with your GitHub Copilot agent in VS Code.
-</details>
+
+### Use with Cursor
+
+By default, when `imageResponses` is set to `"auto"`, the server disables inline image responses for Cursor clients. To enable inline screenshots in Cursor, you need to override this behavior:
+
+If you're running your own Cloudflare Worker, pass `imageResponses: "allow"` when creating the MCP agent:
+
+```typescript
+export const PlaywrightMCP = createMcpAgent(env.BROWSER, {
+  imageResponses: 'allow',
+} as any);
+```
 
 ### Tool Modes
 
