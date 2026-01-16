@@ -15,10 +15,10 @@
  */
 
 import { z } from 'zod';
-import { defineTool, type ToolFactory } from './tool.js';
+import { defineTabTool } from './tool.js';
 
-const uploadFile: ToolFactory = captureSnapshot => defineTool({
-  capability: 'files',
+const uploadFile = defineTabTool({
+  capability: 'core',
 
   schema: {
     name: 'browser_file_upload',
@@ -30,30 +30,23 @@ const uploadFile: ToolFactory = captureSnapshot => defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params) => {
-    const modalState = context.modalStates().find(state => state.type === 'fileChooser');
+  handle: async (tab, params, response) => {
+    response.setIncludeSnapshot();
+
+    const modalState = tab.modalStates().find(state => state.type === 'fileChooser');
     if (!modalState)
       throw new Error('No file chooser visible');
 
-    const code = [
-      `// <internal code to chose files ${params.paths.join(', ')}`,
-    ];
+    response.addCode(`await fileChooser.setFiles(${JSON.stringify(params.paths)})`);
 
-    const action = async () => {
+    tab.clearModalState(modalState);
+    await tab.waitForCompletion(async () => {
       await modalState.fileChooser.setFiles(params.paths);
-      context.clearModalState(modalState);
-    };
-
-    return {
-      code,
-      action,
-      captureSnapshot,
-      waitForNetwork: true,
-    };
+    });
   },
   clearsModalState: 'fileChooser',
 });
 
-export default (captureSnapshot: boolean) => [
-  uploadFile(captureSnapshot),
+export default [
+  uploadFile,
 ];

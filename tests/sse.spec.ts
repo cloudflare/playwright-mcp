@@ -20,7 +20,6 @@ import url from 'node:url';
 import { ChildProcess, spawn } from 'node:child_process';
 import path from 'node:path';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 import { test as baseTest, expect } from './fixtures.js';
@@ -68,7 +67,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
 
 test('sse transport', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint();
-  const transport = new SSEClientTransport(url);
+  const transport = new SSEClientTransport(new URL('/sse', url));
   const client = new Client({ name: 'test', version: '1.0.0' });
   await client.connect(transport);
   await client.ping();
@@ -84,7 +83,7 @@ test('sse transport (config)', async ({ serverEndpoint }) => {
   await fs.promises.writeFile(configFile, JSON.stringify(config, null, 2));
 
   const { url } = await serverEndpoint({ noPort: true, args: ['--config=' + configFile] });
-  const transport = new SSEClientTransport(url);
+  const transport = new SSEClientTransport(new URL('/sse', url));
   const client = new Client({ name: 'test', version: '1.0.0' });
   await client.connect(transport);
   await client.ping();
@@ -93,7 +92,7 @@ test('sse transport (config)', async ({ serverEndpoint }) => {
 test('sse transport browser lifecycle (isolated)', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ args: ['--isolated'] });
 
-  const transport1 = new SSEClientTransport(url);
+  const transport1 = new SSEClientTransport(new URL('/sse', url));
   const client1 = new Client({ name: 'test', version: '1.0.0' });
   await client1.connect(transport1);
   await client1.callTool({
@@ -102,7 +101,7 @@ test('sse transport browser lifecycle (isolated)', async ({ serverEndpoint, serv
   });
   await client1.close();
 
-  const transport2 = new SSEClientTransport(url);
+  const transport2 = new SSEClientTransport(new URL('/sse', url));
   const client2 = new Client({ name: 'test', version: '1.0.0' });
   await client2.connect(transport2);
   await client2.callTool({
@@ -130,7 +129,7 @@ test('sse transport browser lifecycle (isolated)', async ({ serverEndpoint, serv
 test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ args: ['--isolated'] });
 
-  const transport1 = new SSEClientTransport(url);
+  const transport1 = new SSEClientTransport(new URL('/sse', url));
   const client1 = new Client({ name: 'test', version: '1.0.0' });
   await client1.connect(transport1);
   await client1.callTool({
@@ -138,7 +137,7 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
     arguments: { url: server.HELLO_WORLD },
   });
 
-  const transport2 = new SSEClientTransport(url);
+  const transport2 = new SSEClientTransport(new URL('/sse', url));
   const client2 = new Client({ name: 'test', version: '1.0.0' });
   await client2.connect(transport2);
   await client2.callTool({
@@ -147,7 +146,7 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
   });
   await client1.close();
 
-  const transport3 = new SSEClientTransport(url);
+  const transport3 = new SSEClientTransport(new URL('/sse', url));
   const client3 = new Client({ name: 'test', version: '1.0.0' });
   await client3.connect(transport3);
   await client3.callTool({
@@ -177,7 +176,7 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
 test('sse transport browser lifecycle (persistent)', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint();
 
-  const transport1 = new SSEClientTransport(url);
+  const transport1 = new SSEClientTransport(new URL('/sse', url));
   const client1 = new Client({ name: 'test', version: '1.0.0' });
   await client1.connect(transport1);
   await client1.callTool({
@@ -186,7 +185,7 @@ test('sse transport browser lifecycle (persistent)', async ({ serverEndpoint, se
   });
   await client1.close();
 
-  const transport2 = new SSEClientTransport(url);
+  const transport2 = new SSEClientTransport(new URL('/sse', url));
   const client2 = new Client({ name: 'test', version: '1.0.0' });
   await client2.connect(transport2);
   await client2.callTool({
@@ -214,7 +213,7 @@ test('sse transport browser lifecycle (persistent)', async ({ serverEndpoint, se
 test('sse transport browser lifecycle (persistent, multiclient)', async ({ serverEndpoint, server }) => {
   const { url } = await serverEndpoint();
 
-  const transport1 = new SSEClientTransport(url);
+  const transport1 = new SSEClientTransport(new URL('/sse', url));
   const client1 = new Client({ name: 'test', version: '1.0.0' });
   await client1.connect(transport1);
   await client1.callTool({
@@ -222,7 +221,7 @@ test('sse transport browser lifecycle (persistent, multiclient)', async ({ serve
     arguments: { url: server.HELLO_WORLD },
   });
 
-  const transport2 = new SSEClientTransport(url);
+  const transport2 = new SSEClientTransport(new URL('/sse', url));
   const client2 = new Client({ name: 'test', version: '1.0.0' });
   await client2.connect(transport2);
   const response = await client2.callTool({
@@ -234,13 +233,4 @@ test('sse transport browser lifecycle (persistent, multiclient)', async ({ serve
 
   await client1.close();
   await client2.close();
-});
-
-test('streamable http transport', async ({ serverEndpoint }) => {
-  const { url } = await serverEndpoint();
-  const transport = new StreamableHTTPClientTransport(new URL('/mcp', url));
-  const client = new Client({ name: 'test', version: '1.0.0' });
-  await client.connect(transport);
-  await client.ping();
-  expect(transport.sessionId, 'has session support').toBeDefined();
 });

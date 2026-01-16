@@ -15,6 +15,7 @@ export default defineConfig({
       'crypto': 'node:crypto',
       'dns': 'node:dns',
       'events': 'node:events',
+      'fs': 'node:fs',
       'http': 'node:http',
       'http2': 'node:http2',
       'https': 'node:https',
@@ -31,10 +32,11 @@ export default defineConfig({
       'util': 'node:util',
       'zlib': 'node:zlib',
 
+      // imported from src/tools/utils.ts
+      'playwright-core/lib/utils': path.resolve(__dirname, './node_modules/@cloudflare/playwright/lib/packages/playwright-core/src/utils/isomorphic/locatorGenerators.js'),
+
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
-      'node:fs': '@cloudflare/playwright/fs',
-      'fs': '@cloudflare/playwright/fs',
 
       './package.js': path.resolve(__dirname, './src/package.ts'),
     },
@@ -55,20 +57,11 @@ export default defineConfig({
       output: [
         {
           format: 'es',
-          dir: 'lib/esm',
+          dir: 'lib',
           preserveModules: true,
           preserveModulesRoot: 'src',
           entryFileNames: '[name].js',
           chunkFileNames: '[name].js',
-        },
-        {
-          format: 'cjs',
-          dir: 'lib/cjs',
-          preserveModules: true,
-          preserveModulesRoot: 'src',
-          entryFileNames: '[name].js',
-          chunkFileNames: '[name].js',
-          exports: 'named',
         },
       ],
       external: [
@@ -81,6 +74,7 @@ export default defineConfig({
         'node:crypto',
         'node:dns',
         'node:events',
+        'node:fs',
         'node:http',
         'node:http2',
         'node:https',
@@ -100,7 +94,6 @@ export default defineConfig({
 
         '@cloudflare/playwright',
         '@cloudflare/playwright/test',
-        '@cloudflare/playwright/fs',
         'cloudflare:workers',
 
         /@modelcontextprotocol\/sdk\/.*/,

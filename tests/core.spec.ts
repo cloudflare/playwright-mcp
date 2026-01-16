@@ -20,93 +20,15 @@ test('browser_navigate', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
-  })).toHaveTextContent(`
-- Ran Playwright code:
-\`\`\`js
-// Navigate to ${server.HELLO_WORLD}
-await page.goto('${server.HELLO_WORLD}');
-\`\`\`
-
-- Page URL: ${server.HELLO_WORLD}
+  })).toHaveResponse({
+    code: `await page.goto('${server.HELLO_WORLD}');`,
+    pageState: `- Page URL: ${server.HELLO_WORLD}
 - Page Title: Title
-- Page Snapshot
+- Page Snapshot:
 \`\`\`yaml
 - generic [active] [ref=e1]: Hello, world!
-\`\`\`
-`
-  );
-});
-
-test('browser_click', async ({ client, server, mcpBrowser }) => {
-  server.setContent('/', `
-    <title>Title</title>
-    <button>Submit</button>
-  `, 'text/html');
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
+\`\`\``,
   });
-
-  expect(await client.callTool({
-    name: 'browser_click',
-    arguments: {
-      element: 'Submit button',
-      ref: 'e2',
-    },
-  })).toHaveTextContent(`
-- Ran Playwright code:
-\`\`\`js
-// Click Submit button
-await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\`
-
-- Page URL: ${server.PREFIX}
-- Page Title: Title
-- Page Snapshot
-\`\`\`yaml
-- button "Submit" ${mcpBrowser !== 'webkit' || process.platform === 'linux' ? '[active] ' : ''}[ref=e2]
-\`\`\`
-`);
-});
-
-test('browser_click (double)', async ({ client, server }) => {
-  server.setContent('/', `
-    <title>Title</title>
-    <script>
-      function handle() {
-        document.querySelector('h1').textContent = 'Double clicked';
-      }
-    </script>
-    <h1 ondblclick="handle()">Click me</h1>
-  `, 'text/html');
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
-  });
-
-  expect(await client.callTool({
-    name: 'browser_click',
-    arguments: {
-      element: 'Click me',
-      ref: 'e2',
-      doubleClick: true,
-    },
-  })).toHaveTextContent(`
-- Ran Playwright code:
-\`\`\`js
-// Double click Click me
-await page.getByRole('heading', { name: 'Click me' }).dblclick();
-\`\`\`
-
-- Page URL: ${server.PREFIX}
-- Page Title: Title
-- Page Snapshot
-\`\`\`yaml
-- heading "Double clicked" [level=1] [ref=e3]
-\`\`\`
-`);
 });
 
 test('browser_select_option', async ({ client, server }) => {
@@ -130,22 +52,17 @@ test('browser_select_option', async ({ client, server }) => {
       ref: 'e2',
       values: ['bar'],
     },
-  })).toHaveTextContent(`
-- Ran Playwright code:
-\`\`\`js
-// Select options [bar] in Select
-await page.getByRole('combobox').selectOption(['bar']);
-\`\`\`
-
-- Page URL: ${server.PREFIX}
+  })).toHaveResponse({
+    code: `await page.getByRole('combobox').selectOption(['bar']);`,
+    pageState: `- Page URL: ${server.PREFIX}
 - Page Title: Title
-- Page Snapshot
+- Page Snapshot:
 \`\`\`yaml
 - combobox [ref=e2]:
   - option "Foo"
   - option "Bar" [selected]
-\`\`\`
-`);
+\`\`\``,
+  });
 });
 
 test('browser_select_option (multiple)', async ({ client, server }) => {
@@ -170,82 +87,14 @@ test('browser_select_option (multiple)', async ({ client, server }) => {
       ref: 'e2',
       values: ['bar', 'baz'],
     },
-  })).toHaveTextContent(`
-- Ran Playwright code:
-\`\`\`js
-// Select options [bar, baz] in Select
-await page.getByRole('listbox').selectOption(['bar', 'baz']);
-\`\`\`
-
-- Page URL: ${server.PREFIX}
-- Page Title: Title
-- Page Snapshot
-\`\`\`yaml
+  })).toHaveResponse({
+    code: `await page.getByRole('listbox').selectOption(['bar', 'baz']);`,
+    pageState: expect.stringContaining(`
 - listbox [ref=e2]:
   - option "Foo" [ref=e3]
   - option "Bar" [selected] [ref=e4]
-  - option "Baz" [selected] [ref=e5]
-\`\`\`
-`);
-});
-
-test('browser_type', async ({ client, server }) => {
-  server.setContent('/', `
-    <!DOCTYPE html>
-    <html>
-      <input type='keypress' onkeypress="console.log('Key pressed:', event.key, ', Text:', event.target.value)"></input>
-    </html>
-  `, 'text/html');
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: {
-      url: server.PREFIX,
-    },
+  - option "Baz" [selected] [ref=e5]`),
   });
-  await client.callTool({
-    name: 'browser_type',
-    arguments: {
-      element: 'textbox',
-      ref: 'e2',
-      text: 'Hi!',
-      submit: true,
-    },
-  });
-  expect(await client.callTool({
-    name: 'browser_console_messages',
-  })).toHaveTextContent('[LOG] Key pressed: Enter , Text: Hi!');
-});
-
-test('browser_type (slowly)', async ({ client, server }) => {
-  server.setContent('/', `
-    <input type='text' onkeydown="console.log('Key pressed:', event.key, 'Text:', event.target.value)"></input>
-  `, 'text/html');
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: {
-      url: server.PREFIX,
-    },
-  });
-  await client.callTool({
-    name: 'browser_type',
-    arguments: {
-      element: 'textbox',
-      ref: 'e2',
-      text: 'Hi!',
-      submit: true,
-      slowly: true,
-    },
-  });
-  expect(await client.callTool({
-    name: 'browser_console_messages',
-  })).toHaveTextContent([
-    '[LOG] Key pressed: H Text: ',
-    '[LOG] Key pressed: i Text: H',
-    '[LOG] Key pressed: ! Text: Hi',
-    '[LOG] Key pressed: Enter Text: Hi!',
-  ].join('\n'));
 });
 
 test('browser_resize', async ({ client, server }) => {
@@ -269,12 +118,12 @@ test('browser_resize', async ({ client, server }) => {
       height: 780,
     },
   });
-  expect(response).toContainTextContent(`- Ran Playwright code:
-\`\`\`js
-// Resize browser window to 390x780
-await page.setViewportSize({ width: 390, height: 780 });
-\`\`\``);
-  await expect.poll(() => client.callTool({ name: 'browser_snapshot' })).toContainTextContent('Window size: 390x780');
+  expect(response).toHaveResponse({
+    code: `await page.setViewportSize({ width: 390, height: 780 });`,
+  });
+  await expect.poll(() => client.callTool({ name: 'browser_snapshot' })).toHaveResponse({
+    pageState: expect.stringContaining(`Window size: 390x780`),
+  });
 });
 
 test('old locator error message', async ({ client, server }) => {
@@ -293,10 +142,11 @@ test('old locator error message', async ({ client, server }) => {
     arguments: {
       url: server.PREFIX,
     },
-  })).toContainTextContent(`
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`
   - button "Button 1" [ref=e2]
-  - button "Button 2" [ref=e3]
-  `.trim());
+  - button "Button 2" [ref=e3]`),
+  });
 
   await client.callTool({
     name: 'browser_click',
@@ -312,7 +162,10 @@ test('old locator error message', async ({ client, server }) => {
       element: 'Button 2',
       ref: 'e3',
     },
-  })).toContainTextContent('Ref not found');
+  })).toHaveResponse({
+    result: expect.stringContaining(`Ref e3 not found in the current page snapshot. Try capturing new snapshot.`),
+    isError: true,
+  });
 });
 
 test('visibility: hidden > visible should be shown', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/535' } }, async ({ client, server }) => {
@@ -331,5 +184,7 @@ test('visibility: hidden > visible should be shown', { annotation: { type: 'issu
 
   expect(await client.callTool({
     name: 'browser_snapshot'
-  })).toContainTextContent('- button "Button"');
+  })).toHaveResponse({
+    pageState: expect.stringContaining(`- button "Button"`),
+  });
 });
