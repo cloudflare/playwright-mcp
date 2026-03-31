@@ -1,0 +1,37 @@
+diff --git a/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/browserType.js b/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/browserType.js
+index 88a5d81..f754070 100644
+--- a/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/browserType.js
++++ b/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/browserType.js
+@@ -121,14 +121,16 @@ class BrowserType extends SdkObject {
+     } = options;
+     await this._createArtifactDirs(options);
+     const tempDirectories = [];
+-    const artifactsDir = await fs.promises.mkdtemp(path__default.join(os.tmpdir(), "playwright-artifacts-"));
++    const artifactsDir = path__default.join(os.tmpdir(), "playwright-artifacts-" + Math.random().toString(36).slice(2));
++    await fs.promises.mkdir(artifactsDir, { recursive: true });
+     tempDirectories.push(artifactsDir);
+     if (userDataDir) {
+       assert(path__default.isAbsolute(userDataDir), "userDataDir must be an absolute path");
+       if (!await existsAsync(userDataDir))
+         await fs.promises.mkdir(userDataDir, { recursive: true, mode: 448 });
+     } else {
+-      userDataDir = await fs.promises.mkdtemp(path__default.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
++      userDataDir = path__default.join(os.tmpdir(), `playwright_${this._name}dev_profile-` + Math.random().toString(36).slice(2));
++      await fs.promises.mkdir(userDataDir, { recursive: true });
+       tempDirectories.push(userDataDir);
+     }
+     await this.prepareUserDataDir(options, userDataDir);
+diff --git a/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/chromium/chromium.js b/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/chromium/chromium.js
+index ab3c9e9..86160e3 100644
+--- a/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/chromium/chromium.js
++++ b/node_modules/@cloudflare/playwright/lib/playwright-core/src/server/chromium/chromium.js
+@@ -59,7 +59,8 @@ class Chromium extends BrowserType {
+       headersMap = { "User-Agent": getUserAgent() };
+     else if (headersMap && !Object.keys(headersMap).some((key) => key.toLowerCase() === "user-agent"))
+       headersMap["User-Agent"] = getUserAgent();
+-    const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
++    const artifactsDir = ARTIFACTS_FOLDER + Math.random().toString(36).slice(2);
++    await progress.race(fs.promises.mkdir(artifactsDir, { recursive: true }));
+     const doCleanup = async () => {
+       await removeFolders([artifactsDir]);
+       const cb = onClose;

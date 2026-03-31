@@ -1,6 +1,6 @@
 name = "playwright-mcp-example"
 main = "src/index.ts"
-compatibility_date = "2025-03-10"
+compatibility_date = "2025-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 [browser]

@@ -33,8 +33,7 @@ export default defineConfig({
 
       'playwright-core': '@cloudflare/playwright',
       'playwright': '@cloudflare/playwright/test',
-      'node:fs': '@cloudflare/playwright/fs',
-      'fs': '@cloudflare/playwright/fs',
+      'fs': 'node:fs',
 
       './package.js': path.resolve(__dirname, './src/package.ts'),
     },
@@ -100,7 +99,7 @@ export default defineConfig({
 
         '@cloudflare/playwright',
         '@cloudflare/playwright/test',
-        '@cloudflare/playwright/fs',
+        'node:fs',
         'cloudflare:workers',
 
         /@modelcontextprotocol\/sdk\/.*/,
