@@ -40,8 +40,17 @@ export function contextFactory(browserConfig: FullConfig['browser']): BrowserCon
   return new PersistentContextFactory(browserConfig);
 }
 
+export type CreateContextResult = {
+  browserContext: playwright.BrowserContext,
+  close: () => Promise<void>,
+  // Optional "hard" close that destroys any remote resources (e.g. sends CDP
+  // `Browser.close` to a CDP-connected remote browser). Factories that have
+  // nothing extra to do can omit this — callers should fall back to `close`.
+  terminate?: () => Promise<void>,
+};
+
 export interface BrowserContextFactory {
-  createContext(): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }>;
+  createContext(): Promise<CreateContextResult>;
 }
 
 class BaseContextFactory implements BrowserContextFactory {
@@ -73,7 +82,7 @@ class BaseContextFactory implements BrowserContextFactory {
     throw new Error('Not implemented');
   }
 
-  async createContext(): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
+  async createContext(): Promise<CreateContextResult> {
     testDebug(`create browser context (${this.name})`);
     const browser = await this._obtainBrowser();
     const browserContext = await this._doCreateContext(browser);
@@ -131,6 +140,38 @@ class CdpContextFactory extends BaseContextFactory {
 
   protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
     return this.browserConfig.isolated ? await browser.newContext() : browser.contexts()[0];
+  }
+
+  override async createContext(): Promise<CreateContextResult> {
+    const result = await super.createContext();
+    return {
+      ...result,
+      terminate: () => this._terminateRemoteSession(result.browserContext),
+    };
+  }
+
+  // For CDP-connected browsers (e.g. Cloudflare Browser Rendering), calling
+  // `browser.close()` only disconnects the local WebSocket — the remote
+  // browser keeps running until its keep-alive timeout expires. Send the
+  // CDP `Browser.close` command first to actually terminate the remote
+  // session, then fall back to the regular disconnect path.
+  private async _terminateRemoteSession(browserContext: playwright.BrowserContext) {
+    testDebug(`terminate remote session (${this.name})`);
+    const browser = browserContext.browser();
+    if (browser) {
+      try {
+        const cdpSession = await browser.newBrowserCDPSession();
+        await cdpSession.send('Browser.close');
+      } catch {
+        // `Browser.close` causes the CDP connection to drop, which surfaces
+        // as an error here. That's expected — the remote session is gone.
+      }
+    }
+    // Reset the shared promise so the next tool call reconnects.
+    this._browserPromise = undefined;
+    await browserContext.close().catch(() => {});
+    if (browser)
+      await browser.close().catch(() => {});
   }
 }
 

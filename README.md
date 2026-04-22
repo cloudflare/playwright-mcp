@@ -341,6 +341,14 @@ X Y coordinate space, based on the provided screenshot.
 
 <!-- NOTE: This has been generated via update-readme.js -->
 
+- **browser_terminate**
+  - Title: Terminate browser session
+  - Description: Close the browser and release any remote CDP-backed session so it does not idle on until its keep-alive expires. Use this instead of browser_close when you are connected to a remote browser (e.g. Cloudflare Browser Rendering) and want to free the session immediately.
+  - Parameters: None
+  - Read-only: **true**
+
+<!-- NOTE: This has been generated via update-readme.js -->
+
 - **browser_resize**
   - Title: Resize browser window
   - Description: Resize the browser window

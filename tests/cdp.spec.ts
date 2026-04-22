@@ -82,6 +82,36 @@ test('should throw connection error and allow re-connecting', async ({ cdpServer
 // NOTE: Can be removed when we drop Node.js 18 support and changed to import.meta.filename.
 const __filename = url.fileURLToPath(import.meta.url);
 
+test('browser_terminate terminates the remote CDP browser (not just disconnect)', async ({ cdpServer, startClient, server }) => {
+  const browserContext = await cdpServer.start();
+  const browser = browserContext.browser();
+  expect(browser).toBeTruthy();
+  expect(browser!.isConnected()).toBe(true);
+
+  const disconnected = new Promise<void>(resolve => browser!.once('disconnected', () => resolve()));
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+
+  // Trigger the first CDP connection.
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  // Call browser_terminate — this should send CDP `Browser.close` and
+  // terminate the remote browser, not just drop the MCP-side connection.
+  await client.callTool({ name: 'browser_terminate' });
+
+  // If browser_terminate works correctly for CDP-connected sessions, the
+  // remote Chrome instance should be gone. The test's own observer of that
+  // instance should see the `disconnected` event fire.
+  await expect(Promise.race([
+    disconnected.then(() => 'disconnected'),
+    new Promise<string>(resolve => setTimeout(() => resolve('timeout'), 5000)),
+  ])).resolves.toBe('disconnected');
+  expect(browser!.isConnected()).toBe(false);
+});
+
 test('does not support --device', async () => {
   const result = spawnSync('node', [
     path.join(__filename, '../../cli.js'), '--device=Pixel 5', '--cdp-endpoint=http://localhost:1234',

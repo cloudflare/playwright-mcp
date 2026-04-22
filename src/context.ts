@@ -25,7 +25,7 @@ import { outputFile } from './config.js';
 import type { ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { ModalState, Tool, ToolActionResult } from './tools/tool.js';
 import type { FullConfig } from './config.js';
-import type { BrowserContextFactory } from './browserContextFactory.js';
+import type { BrowserContextFactory, CreateContextResult } from './browserContextFactory.js';
 
 type PendingAction = {
   dialogShown: ManualPromise<void>;
@@ -36,7 +36,7 @@ const testDebug = debug('pw:mcp:test');
 export class Context {
   readonly tools: Tool[];
   readonly config: FullConfig;
-  private _browserContextPromise: Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> | undefined;
+  private _browserContextPromise: Promise<CreateContextResult> | undefined;
   private _browserContextFactory: BrowserContextFactory;
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
@@ -291,18 +291,31 @@ ${code.join('\n')}
   }
 
   async close() {
+    await this._tearDown('close');
+  }
+
+  // Destructive teardown. For CDP-connected browsers this sends the CDP
+  // `Browser.close` command so the remote session is actually released
+  // rather than left to idle until its keep-alive expires. For other
+  // transports this behaves the same as `close()`.
+  async terminate() {
+    await this._tearDown('terminate');
+  }
+
+  private async _tearDown(mode: 'close' | 'terminate') {
     if (!this._browserContextPromise)
       return;
 
-    testDebug('close context');
+    testDebug(`${mode} context`);
 
     const promise = this._browserContextPromise;
     this._browserContextPromise = undefined;
 
-    await promise.then(async ({ browserContext, close }) => {
+    await promise.then(async ({ browserContext, close, terminate }) => {
       if (this.config.saveTrace)
         await browserContext.tracing.stop();
-      await close();
+      const teardown = mode === 'terminate' && terminate ? terminate : close;
+      await teardown();
     });
   }
 
@@ -330,7 +343,7 @@ ${code.join('\n')}
     return this._browserContextPromise;
   }
 
-  private async _setupBrowserContext(): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
+  private async _setupBrowserContext(): Promise<CreateContextResult> {
     // TODO: move to the browser context factory to make it based on isolation mode.
     const result = await this._browserContextFactory.createContext();
     const { browserContext } = result;
